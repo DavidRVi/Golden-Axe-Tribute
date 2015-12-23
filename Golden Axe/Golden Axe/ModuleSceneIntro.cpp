@@ -43,8 +43,8 @@ bool ModuleSceneIntro::Start()
 	bool ret = true;
 	LOG("Loading Intro Scene");
 
-	graphics = App->textures->Load("Game/intro.png");
-	background_tex = App->textures->Load("Game/title_background.png");
+	graphics = App->textures->Load("Game/Sprites/intro.png");
+	background_tex = App->textures->Load("Game/Sprites/title_background.png");
 	//App->audio->PlayMusic(INTROMUSIC);
 	ret = App->audio->PlayMusic("Game/Music/Intro.ogg");
 
@@ -63,7 +63,7 @@ bool ModuleSceneIntro::CleanUp()
 
 update_status ModuleSceneIntro::Update()
 {
-	//----- BACKGROUND LOOP
+	//-----		BACKGROUND LOOP		----------------------
 	App->renderer->Blit(background_tex, 0, 0, &background);
 	if (background.h <= 240)
 	{
@@ -74,18 +74,16 @@ update_status ModuleSceneIntro::Update()
 			background.h = 640;
 			background.y = 0;
 		}
-			
 	}
 	background.y += 1;
 	background.h -= 1;
-	//---------
+	//--------------------------------------------------
 
 	App->renderer->Blit(graphics, SCREEN_WIDTH/4 - 20, 0, &symbol);
 	App->renderer->Blit(graphics, 45, 85, &title);
 	App->renderer->Blit(graphics, SCREEN_WIDTH / 2 - 75, 160, &press_start.GetCurrentFrame());
 	App->renderer->Blit(graphics, SCREEN_WIDTH / 2 - 25, 190, &sega);
 
-	
 	return UPDATE_CONTINUE;
 }
 
