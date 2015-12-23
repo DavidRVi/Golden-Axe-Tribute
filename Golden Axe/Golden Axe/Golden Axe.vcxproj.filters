@@ -45,6 +45,9 @@
     <ClCompile Include="ModuleFadeToBlack.cpp">
       <Filter>Core Modules</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleSceneLevel1.cpp">
+      <Filter>Game Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -82,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="Animation.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleSceneLevel1.h">
+      <Filter>Game Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
