@@ -51,7 +51,7 @@ update_status ModuleRender::Update()
 {
 	// debug camera
 	int speed = 5;
-
+	/*
 	if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT)
 		App->renderer->camera.y += speed;
 
@@ -63,7 +63,7 @@ update_status ModuleRender::Update()
 
 	if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT)
 		App->renderer->camera.x -= speed;
-
+		*/
 	return UPDATE_CONTINUE;
 }
 
@@ -111,6 +111,35 @@ bool ModuleRender::Blit(SDL_Texture* texture, int x, int y, SDL_Rect* section, f
 	if (SDL_RenderCopy(renderer, texture, section, &rect) != 0)
 	{
 		LOG("Cannot blit to screen. SDL_RenderCopy error: %s", SDL_GetError());
+		ret = false;
+	}
+
+	return ret;
+}
+
+bool ModuleRender::BlitFlipH(SDL_Texture* texture, int x, int y, SDL_Rect* section, float speed)
+{
+	bool ret = true;
+	SDL_Rect rect;
+	rect.x = (int)(camera.x * speed) + x * SCREEN_SIZE;
+	rect.y = (int)(camera.y * speed) + y * SCREEN_SIZE;
+
+	if (section != NULL)
+	{
+		rect.w = section->w;
+		rect.h = section->h;
+	}
+	else
+	{
+		SDL_QueryTexture(texture, NULL, NULL, &rect.w, &rect.h);
+	}
+
+	rect.w *= SCREEN_SIZE;
+	rect.h *= SCREEN_SIZE;
+	SDL_RendererFlip flip = SDL_FLIP_HORIZONTAL;
+	if (SDL_RenderCopyEx(renderer, texture, section, &rect, 0, NULL, flip) != 0)
+	{
+		LOG("Cannot blit to screen. SDL_RenderCopyEx error: %s", SDL_GetError());
 		ret = false;
 	}
 

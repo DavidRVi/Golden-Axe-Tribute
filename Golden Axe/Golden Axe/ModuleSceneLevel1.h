@@ -5,7 +5,7 @@
 
 class ModuleSceneLevel1 : public Module {
 public:
-	ModuleSceneLevel1(bool enabled = true);
+	ModuleSceneLevel1(bool enabled = false);
 	~ModuleSceneLevel1();
 
 	bool Start();
@@ -19,4 +19,5 @@ public:
 	SDL_Rect parallax;
 
 };
+
 #endif

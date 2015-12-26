@@ -13,6 +13,8 @@
 	class ModuleFadeToBlack;
 
 	class ModuleSceneIntro;
+	class ModuleSceneLevel1;
+	class ModulePlayer;
 	/*
 	class ModulePlayer;
 	class ModuleScene;
@@ -40,6 +42,8 @@
 
 
 		ModuleSceneIntro* intro;
+		ModuleSceneLevel1* level1;
+		ModulePlayer*		player;
 		/*
 		ModulePlayer* player;
 		ModuleScene* scene;

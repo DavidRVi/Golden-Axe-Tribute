@@ -6,6 +6,8 @@
 #include "ModuleAudio.h"
 #include "ModuleFadeToBlack.h"
 #include "ModuleSceneIntro.h"
+#include "ModuleSceneLevel1.h"
+#include "ModulePlayer.h"
 /*
 #include "ModuleScene.h"
 #include "ModulePlayer.h"
@@ -23,10 +25,12 @@ Application::Application()
 	modules.push_back(renderer = new ModuleRender());
 	modules.push_back(textures = new ModuleTextures());
 	modules.push_back(audio = new ModuleAudio());
-	modules.push_back(fade = new ModuleFadeToBlack());
 
-	modules.push_back(intro = new ModuleSceneIntro());
-	// Game Modules
+	modules.push_back(intro = new ModuleSceneIntro(false));
+	modules.push_back(level1 = new ModuleSceneLevel1(false));
+	modules.push_back(player = new ModulePlayer(false));
+	modules.push_back(fade = new ModuleFadeToBlack());
+	//Game Modules
 	/*
 	modules.push_back(scene = new ModuleScene());
 
@@ -61,7 +65,7 @@ bool Application::Init()
 	}
 
 	// Start the first scene --
-	//fade->FadeToBlack(scene, nullptr, 3.0f);
+	fade->FadeToBlack(level1, nullptr, 3.0f);
 
 	return ret;
 }

@@ -8,7 +8,7 @@ struct SDL_Texture;
 
 class ModuleSceneIntro : public Module {
 public:
-	ModuleSceneIntro(bool enabled = true);
+	ModuleSceneIntro(bool enabled = false);
 	~ModuleSceneIntro();
 
 	bool Start();

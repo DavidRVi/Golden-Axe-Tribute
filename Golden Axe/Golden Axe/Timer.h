@@ -16,6 +16,10 @@ public:
 		return (SDL_GetTicks() - initTime) >= timeLimit;
 	}
 
+	void resetTimer() {
+		initTime = SDL_GetTicks();
+	}
+
 private:
 	float timeLimit;
 	float initTime;

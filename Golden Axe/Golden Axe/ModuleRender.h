@@ -21,6 +21,7 @@ public:
 	bool CleanUp();
 
 	bool Blit(SDL_Texture* texture, int x, int y, SDL_Rect* section, float speed = 1.0f);
+	bool BlitFlipH(SDL_Texture* texture, int x, int y, SDL_Rect* section, float speed = 1.0f);
 	void DrawRectangle(SDL_Rect* rect);
 
 public:

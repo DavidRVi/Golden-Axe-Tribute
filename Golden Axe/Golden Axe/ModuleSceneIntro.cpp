@@ -45,9 +45,10 @@ bool ModuleSceneIntro::Start()
 
 	graphics = App->textures->Load("Game/Sprites/intro.png");
 	background_tex = App->textures->Load("Game/Sprites/title_background.png");
-	//App->audio->PlayMusic(INTROMUSIC);
+
 	ret = App->audio->PlayMusic("Game/Music/Intro.ogg");
 
+	
 	return ret;
 }
 
@@ -83,6 +84,10 @@ update_status ModuleSceneIntro::Update()
 	App->renderer->Blit(graphics, 45, 85, &title);
 	App->renderer->Blit(graphics, SCREEN_WIDTH / 2 - 75, 160, &press_start.GetCurrentFrame());
 	App->renderer->Blit(graphics, SCREEN_WIDTH / 2 - 25, 190, &sega);
+
+	
+	if (App->input->GetKey(SDL_SCANCODE_RETURN) == KEY_DOWN)
+		App->fade->FadeToBlack((Module*) App->level1, this);
 
 	return UPDATE_CONTINUE;
 }
