@@ -19,7 +19,8 @@
 	class ModulePlayer;
 	class ModuleScene;
 	class ModuleParticles;
-	class ModuleCollisions;*/
+	*/
+	class ModuleCollisions;
 
 	class Application
 	{
@@ -44,6 +45,8 @@
 		ModuleSceneIntro* intro;
 		ModuleSceneLevel1* level1;
 		ModulePlayer*		player;
+
+		ModuleCollisions*	collisions;
 		/*
 		ModulePlayer* player;
 		ModuleScene* scene;

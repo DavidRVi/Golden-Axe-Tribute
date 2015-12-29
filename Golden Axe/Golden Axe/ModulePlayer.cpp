@@ -4,16 +4,19 @@
 #include "Application.h"
 #include "ModuleAudio.h"
 #include "ModuleRender.h"
+#include "ModuleCollisions.h"
 
 ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	forward_walking = true;
 	repaint_frame = false;
 	idle_timer = new Timer(750);
 
-	pivot.x = 20;
-	pivot.y = 150;
+	pivot.x = 30;
+	pivot.y = 200;
 	pivot.h = 10;
 	pivot.w = 30;
+
+	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
 
 	idle.x = 135;
 	idle.y = 10;
@@ -21,6 +24,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	idle.h = 60;
 	last_frame = idle;
 
+	//Flipped forward animation has to be painted at pivot.x - 30 to fit in
 	forward.frames.push_back({ 0, 90, 60, 60 });
 	forward.frames.push_back({ 60, 90, 60, 60 });
 	forward.frames.push_back({ 120, 90, 60, 60 });
@@ -32,9 +36,13 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	up.frames.push_back({ 320, 90, 30, 60 });
 	up.frames.push_back({ 350, 90, 30, 60 });
 	up.speed = 0.09f;
+
+	player_height = 50;
 }
 
-ModulePlayer::~ModulePlayer() { }
+ModulePlayer::~ModulePlayer() { 
+	RELEASE(idle_timer);
+}
 
 bool ModulePlayer::Start() {
 	bool ret = true;
@@ -42,6 +50,8 @@ bool ModulePlayer::Start() {
 
 	graphics = App->textures->Load("Game/Sprites/dwarf.png");	// Sprite sheet
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
+
+	App->collisions->AddCollider(pivotCol);
 	return ret;
 }
 
@@ -52,16 +62,35 @@ update_status ModulePlayer::PreUpdate() {
 	{
 		current_state = FORWARD;
 		forward_walking = true;
+		if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+			current_state = UP_FORWARD;
+		else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+			current_state = DOWN_FORWARD;
+
+		idle_timer->resetTimer();
 	}		
 	else if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
 	{
 		current_state = BACKWARD;
 		forward_walking = false;
+		if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+			current_state = DOWN_BACKWARD;
+		else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+			current_state = UP_BACKWARD;
+
+		idle_timer->resetTimer();
 	}
 	else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+	{
 		current_state = DOWN;
+		idle_timer->resetTimer();
+	}
 	else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+	{
 		current_state = UP;
+		idle_timer->resetTimer();
+	}
+
 
 	if (idle_timer->hasPassed())
 		repaint_frame = false;
@@ -77,41 +106,72 @@ update_status ModulePlayer::Update() {
 	case(IDLE):
 		if (repaint_frame)
 		{
-			if (forward_walking) ret = App->renderer->Blit(graphics, pivot.x - (last_frame.w / 2), pivot.y, &last_frame);
-			else ret = App->renderer->BlitFlipH(graphics, pivot.x - (last_frame.w / 2), pivot.y, &last_frame);
+			if (forward_walking)
+			{
+				ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+			}
+			else {
+				if (last_frame.w == 60)
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 30, pivot.y - player_height, &last_frame);
+				else ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &last_frame);
+			}
 		}
-		else if (forward_walking) ret = App->renderer->Blit(graphics, pivot.x-(idle.w/2), pivot.y, &idle);
-			else ret = App->renderer->BlitFlipH(graphics, pivot.x-(idle.w/2), pivot.y, &idle);
+		else if (forward_walking) ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &idle);
+			else ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &idle);
 		break;
 	case(FORWARD) :
 		pivot.x += 2;
 		last_frame = forward.GetCurrentFrame();
-		ret = App->renderer->Blit(graphics, pivot.x-(last_frame.w/2), pivot.y, &last_frame);
-		idle_timer->resetTimer();
+		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
 		break;
 	case(BACKWARD) :
 		pivot.x -= 2;
 		last_frame = forward.GetCurrentFrame();
-		ret = App->renderer->BlitFlipH(graphics, pivot.x-(last_frame.w/2), pivot.y, &last_frame);
-		idle_timer->resetTimer();
+		ret = App->renderer->BlitFlipH(graphics, pivot.x-30, pivot.y - player_height, &last_frame);
 		break;
 	case(DOWN) :
 		pivot.y++;
 		last_frame = forward.GetCurrentFrame();
 		if (forward_walking)
-			ret = App->renderer->Blit(graphics, pivot.x - (last_frame.w / 2), pivot.y, &last_frame);
-		else ret = App->renderer->BlitFlipH(graphics, pivot.x - (last_frame.w / 2), pivot.y, &last_frame);
-		idle_timer->resetTimer();
+			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+		else ret = App->renderer->BlitFlipH(graphics, pivot.x-30, pivot.y - player_height, &last_frame);
+		break;
+	case (DOWN_FORWARD) :
+		pivot.y++;
+		pivot.x++;
+		last_frame = forward.GetCurrentFrame();
+		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+		break;
+	case (DOWN_BACKWARD) :
+		pivot.y++;
+		pivot.x--;
+		last_frame = forward.GetCurrentFrame();
+		ret = App->renderer->BlitFlipH(graphics, pivot.x - 30, pivot.y - player_height, &last_frame);
 		break;
 	case (UP) :
 		pivot.y--;
 		last_frame = up.GetCurrentFrame();
 		if (forward_walking)
-			ret = App->renderer->Blit(graphics, pivot.x - (last_frame.w /2), pivot.y, &last_frame);
-		else ret = App->renderer->BlitFlipH(graphics, pivot.x - (last_frame.w / 2), pivot.y, &last_frame);
-		idle_timer->resetTimer();
+			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+		else ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &last_frame);
 		break;
+	case (UP_FORWARD) :
+		pivot.y--;
+		pivot.x++;
+		last_frame = up.GetCurrentFrame();
+		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+		break;
+	case(UP_BACKWARD) :
+		pivot.y--;
+		pivot.x--;
+		last_frame = up.GetCurrentFrame();
+		ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &last_frame);
+		break;
+
 	}
+
+	pivotCol->SetPosition(pivot.x, pivot.y);
+
 	if (ret)
 		return UPDATE_CONTINUE;
 	else return UPDATE_ERROR;
@@ -124,9 +184,9 @@ update_status ModulePlayer::PostUpdate(){
 
 
 bool ModulePlayer::CleanUp() {
+	LOG("Unloading player.");
+
 	App->textures->Unload(graphics);
-	delete idle_timer;
-	idle_timer = nullptr;
 
 	return true;
 }

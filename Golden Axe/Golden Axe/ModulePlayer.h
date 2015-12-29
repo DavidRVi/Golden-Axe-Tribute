@@ -42,6 +42,10 @@ private:
 	bool repaint_frame;
 	SDL_Rect last_frame;
 	Timer* idle_timer;
+
+	int player_height;
+
+	Collider* pivotCol;
 	
 };
 

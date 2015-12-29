@@ -38,6 +38,7 @@ bool ModuleSceneLevel1::Start()
 bool ModuleSceneLevel1::CleanUp() {
 	LOG("Unloading Level 1 Scene");
 	App->textures->Unload(background);
+	App->player->Disable();
 
 	return true;
 }

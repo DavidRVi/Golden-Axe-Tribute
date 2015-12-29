@@ -12,8 +12,10 @@
 #include "ModuleScene.h"
 #include "ModulePlayer.h"
 #include "ModuleParticles.h"
-#include "ModuleCollisions.h"
 */
+
+#include "ModuleCollisions.h"
+
 
 using namespace std;
 
@@ -30,6 +32,8 @@ Application::Application()
 	modules.push_back(level1 = new ModuleSceneLevel1(false));
 	modules.push_back(player = new ModulePlayer(false));
 	modules.push_back(fade = new ModuleFadeToBlack());
+
+	modules.push_back(collisions = new ModuleCollisions());
 	//Game Modules
 	/*
 	modules.push_back(scene = new ModuleScene());
@@ -49,6 +53,8 @@ Application::~Application()
 {
 	for (list<Module*>::iterator it = modules.begin(); it != modules.end(); ++it)
 		RELEASE(*it);
+
+	modules.clear();
 }
 
 bool Application::Init()
