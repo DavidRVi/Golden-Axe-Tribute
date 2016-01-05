@@ -21,6 +21,7 @@
 	class ModuleParticles;
 	*/
 	class ModuleCollisions;
+	class ModuleCameraController;
 
 	class Application
 	{
@@ -47,6 +48,8 @@
 		ModulePlayer*		player;
 
 		ModuleCollisions*	collisions;
+
+		ModuleCameraController* camController;
 		/*
 		ModulePlayer* player;
 		ModuleScene* scene;

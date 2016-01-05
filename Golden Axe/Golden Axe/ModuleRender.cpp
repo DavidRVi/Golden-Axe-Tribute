@@ -146,10 +146,10 @@ bool ModuleRender::BlitFlipH(SDL_Texture* texture, int x, int y, SDL_Rect* secti
 	return ret;
 }
 
-void ModuleRender::DrawRectangle(SDL_Rect* rect) {
+void ModuleRender::DrawRectangle(SDL_Rect* rect, float speed) {
 	SDL_Rect dstrect;
-	dstrect.x = rect->x * SCREEN_SIZE + (camera.x);
-	dstrect.y = rect->y * SCREEN_SIZE + (camera.y);
+	dstrect.x = rect->x * SCREEN_SIZE + (camera.x * speed);
+	dstrect.y = rect->y * SCREEN_SIZE + (camera.y * speed);
 	dstrect.w = rect->w * SCREEN_SIZE;
 	dstrect.h = rect->h * SCREEN_SIZE;
 

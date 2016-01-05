@@ -15,6 +15,7 @@
 */
 
 #include "ModuleCollisions.h"
+#include "ModuleCameraController.h"
 
 
 using namespace std;
@@ -29,6 +30,8 @@ Application::Application()
 	modules.push_back(audio = new ModuleAudio());
 
 	modules.push_back(intro = new ModuleSceneIntro(false));
+
+	modules.push_back(camController = new ModuleCameraController(false));
 	modules.push_back(level1 = new ModuleSceneLevel1(false));
 	modules.push_back(player = new ModulePlayer(false));
 	modules.push_back(fade = new ModuleFadeToBlack());

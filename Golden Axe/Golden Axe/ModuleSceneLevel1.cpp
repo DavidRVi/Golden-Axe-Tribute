@@ -5,6 +5,8 @@
 #include "Globals.h"
 #include "Application.h"
 #include "ModulePlayer.h"
+#include "ModuleCollisions.h"
+#include "ModuleCameraController.h"
 
 ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 {
@@ -17,6 +19,8 @@ ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 	parallax.y = 260;
 	parallax.w = 1820;
 	parallax.h = 240;
+
+	east_wall = new Collider(0, 0, 780, 160, this, WORLD);
 }
 
 ModuleSceneLevel1::~ModuleSceneLevel1() {
@@ -32,6 +36,9 @@ bool ModuleSceneLevel1::Start()
 	//ret = App->audio->PlayMusic("Game/Music/level1.ogg");
 
 	App->player->Enable();
+	App->camController->Enable();
+
+	App->collisions->AddCollider(east_wall);
 	return ret;
 }
 
@@ -44,8 +51,8 @@ bool ModuleSceneLevel1::CleanUp() {
 }
 
 update_status ModuleSceneLevel1::Update() {
-	App->renderer->Blit(background, 0, 0, &parallax, 0.8f);
-	App->renderer->Blit(background, 0, 0, &ground, 0.9f);
+	App->renderer->Blit(background, 0, 0, &parallax, 0.9f);
+	App->renderer->Blit(background, 0, 0, &ground, 1.0f);
 
 	return UPDATE_CONTINUE;
 }

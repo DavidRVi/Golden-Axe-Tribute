@@ -3,6 +3,8 @@
 
 #include "Module.h"
 
+class Collider;
+
 class ModuleSceneLevel1 : public Module {
 public:
 	ModuleSceneLevel1(bool enabled = false);
@@ -17,6 +19,10 @@ public:
 	SDL_Texture* background = nullptr;
 	SDL_Rect ground;
 	SDL_Rect parallax;
+
+	Collider* west_wall;
+	Collider* centre_wall;
+	Collider* east_wall;
 
 };
 

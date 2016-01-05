@@ -54,6 +54,9 @@
     <ClCompile Include="ModuleCollisions.cpp">
       <Filter>Core Modules</Filter>
     </ClCompile>
+    <ClCompile Include="ModuleCameraController.cpp">
+      <Filter>Game Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -103,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="Collider.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleCameraController.h">
+      <Filter>Game Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

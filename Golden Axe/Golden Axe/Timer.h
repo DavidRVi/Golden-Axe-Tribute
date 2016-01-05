@@ -1,3 +1,6 @@
+#ifndef __TIMER_H__
+#define __TIMER_H__
+
 #include "SDL/include/SDL.h"
 
 class Timer
@@ -24,3 +27,5 @@ private:
 	float timeLimit;
 	float initTime;
 };
+
+#endif
