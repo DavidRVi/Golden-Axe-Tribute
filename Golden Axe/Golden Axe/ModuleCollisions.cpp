@@ -40,17 +40,13 @@ update_status ModuleCollisions::PreUpdate() {
 		{
 			for (; jt != it; --jt)
 			{
-
-				if (DetectCollision(it->first, jt->first))
+				if (collisionMatrix[it->first->getType()][jt->first->getType()])
 				{
-					//LOG("COLLISIOOON")
-					if (collisionMatrix[it->first->getType()][jt->first->getType()])
+					if (DetectCollision(it->first, jt->first))
 					{
-						LOG("Collision processed.");
 						it->second = it->first->GetListener()->OnCollision(it->first, jt->first);
 						jt->second = jt->first->GetListener()->OnCollision(jt->first, it->first);
 					}
-					else LOG("COLLISION IGNORED.");
 				}
 			}
 			jt = colliderList.end();

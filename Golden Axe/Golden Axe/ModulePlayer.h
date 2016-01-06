@@ -10,7 +10,8 @@
 struct SDL_Texture;
 class Collider;
 
-enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING };
+enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, ATTACKING };
+enum AttackState { NONE = 0, JUMPATTACK, IDLEATTACK, CHARGEATTACK };
 
 class ModulePlayer : public Module
 {
@@ -32,6 +33,10 @@ public:
 	Animation forward;
 	Animation up;
 	Animation run;
+
+	SDL_Rect jumpattack;
+	Animation idleattack;
+	SDL_Rect chargeattack;
 
 	SDL_Rect jump_up;
 	SDL_Rect jump_down;
@@ -56,6 +61,7 @@ private:
 	bool westLocked;
 
 	int player_height;
+	int charge_it;
 
 	int jump_it;
 	int alpha_jump;
@@ -64,7 +70,12 @@ private:
 
 	Collider* pivotCol;
 
+	AttackState attackState;
+	Timer* attackWindow;
+	Timer* chargeAttackTimer;
+
 	int getJumpHeight(int i);
+	int getChargeHeight(int i);
 	
 };
 

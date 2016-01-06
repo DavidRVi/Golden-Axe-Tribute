@@ -7,6 +7,7 @@
 #include "ModulePlayer.h"
 #include "ModuleCollisions.h"
 #include "ModuleCameraController.h"
+#include "ModuleInput.h"
 
 ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 {
@@ -21,6 +22,8 @@ ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 	parallax.h = 240;
 
 	east_wall = new Collider(0, 0, 780, 160, this, WORLD);
+
+	current_state = NO_BATTLE;
 }
 
 ModuleSceneLevel1::~ModuleSceneLevel1() {
@@ -54,6 +57,25 @@ update_status ModuleSceneLevel1::Update() {
 	App->renderer->Blit(background, 0, 0, &parallax, 0.9f);
 	App->renderer->Blit(background, 0, 0, &ground, 1.0f);
 
+	int activeEnemies = 0;
+	if (current_state == BATTLE)
+	{
+		if (activeEnemies == 0)
+		{
+			App->camController->ShowGoAnimation();
+			current_state = NO_BATTLE;
+		}
+
+	}
+
 	return UPDATE_CONTINUE;
+}
+
+void ModuleSceneLevel1::ChangeState(LevelState state) {
+	current_state = state;
+}
+
+void ModuleSceneLevel1::spawnEnemies() {
+	//current_state = BATTLE;
 }
 
