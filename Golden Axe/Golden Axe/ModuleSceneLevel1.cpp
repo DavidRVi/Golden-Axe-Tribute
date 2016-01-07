@@ -37,8 +37,8 @@ bool ModuleSceneLevel1::Start()
 
 	background = App->textures->Load("Game/Sprites/level1.png");
 	//ret = App->audio->PlayMusic("Game/Music/level1.ogg");
-
-	App->player->Enable();
+	player = App->player;
+	player->Enable();
 	App->camController->Enable();
 
 	App->collisions->AddCollider(east_wall);
@@ -48,15 +48,18 @@ bool ModuleSceneLevel1::Start()
 bool ModuleSceneLevel1::CleanUp() {
 	LOG("Unloading Level 1 Scene");
 	App->textures->Unload(background);
-	App->player->Disable();
+	player->Disable();
+	player = nullptr;
 
 	return true;
 }
 
 update_status ModuleSceneLevel1::Update() {
-	App->renderer->Blit(background, 0, 0, &parallax, 0.9f);
-	App->renderer->Blit(background, 0, 0, &ground, 1.0f);
+	bool ret;
+	ret = App->renderer->Blit(background, 0, 0, &parallax, 0.9f);
+	ret = App->renderer->Blit(background, 0, 0, &ground, 1.0f);
 
+	ret = player->Draw();
 	int activeEnemies = 0;
 	if (current_state == BATTLE)
 	{
@@ -67,8 +70,10 @@ update_status ModuleSceneLevel1::Update() {
 		}
 
 	}
-
-	return UPDATE_CONTINUE;
+	
+	if (ret)
+		return UPDATE_CONTINUE;
+	else return UPDATE_ERROR;
 }
 
 void ModuleSceneLevel1::ChangeState(LevelState state) {

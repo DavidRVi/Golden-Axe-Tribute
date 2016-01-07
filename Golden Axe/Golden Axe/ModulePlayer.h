@@ -26,6 +26,8 @@ public:
 	bool CleanUp();
 	bool OnCollision(Collider* a, Collider* b);
 
+	bool Draw();
+
 public:
 
 	SDL_Texture* graphics = nullptr;
@@ -70,9 +72,13 @@ private:
 
 	Collider* pivotCol;
 
+	Collider* chargeAttackCol;
+	Collider* idleAttackCol;
+	Collider* jumpAttackCol;
+
 	AttackState attackState;
 	Timer* attackWindow;
-	Timer* chargeAttackTimer;
+	Timer* chargeAttackTimer;		//Indicates the time it takes the charge attack to complete
 
 	int getJumpHeight(int i);
 	int getChargeHeight(int i);

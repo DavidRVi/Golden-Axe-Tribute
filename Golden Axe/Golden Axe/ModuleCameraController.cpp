@@ -18,7 +18,7 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 }
 
 ModuleCameraController::~ModuleCameraController() {
-
+	RELEASE(go_timer);
 }
 
 bool ModuleCameraController::Start() {
@@ -100,6 +100,7 @@ update_status ModuleCameraController::PostUpdate() {
 }
 
 bool ModuleCameraController::CleanUp() {
+	App->textures->Unload(interface);
 	return true;
 }
 
@@ -118,8 +119,6 @@ bool ModuleCameraController::OnCollision(Collider* a, Collider* b)
 			spawnMonsters = false;
 			cameraTrigger = nullptr;
 			App->level1->ChangeState(BATTLE);
-			//if no enemies, create another TRIGGER collider to keep moving on and show GO! signal
-			//App->level1->ChangeState(NO_BATTLE);
 			return true;
 		}
 		else if (triggerCount >= 50 && !spawnMonsters)

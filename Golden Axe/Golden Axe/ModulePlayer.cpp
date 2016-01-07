@@ -7,6 +7,7 @@
 #include "ModuleCollisions.h"
 
 ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
+	player_height = 50;
 	forward_walking = true;
 	repaint_frame = false;
 
@@ -34,6 +35,9 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	pivot.w = 30;
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
+	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PATTACK);
+	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
+	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 40, player_height + 20, this, PATTACK);
 
 	// Idle frame has to be painted at pivor.x - 15 to fit in
 	idle.x = 135;
@@ -81,11 +85,18 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	chargeattack.w = 50;
 	chargeattack.h = 40;
 
-	player_height = 50;
+	idleattack.frames.push_back({ 0, 250, 60, 50 });
+	idleattack.frames.push_back({ 70, 250, 80, 50 });
+	idleattack.speed = 0.1f;
+
+
 }
 
 ModulePlayer::~ModulePlayer() { 
 	RELEASE(idle_timer);
+	RELEASE(run_timer);
+	RELEASE(attackWindow);
+	RELEASE(chargeAttackTimer);
 }
 
 bool ModulePlayer::Start() {
@@ -96,6 +107,12 @@ bool ModulePlayer::Start() {
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
 
 	App->collisions->AddCollider(pivotCol);
+	App->collisions->AddCollider(chargeAttackCol);
+	App->collisions->AddCollider(idleAttackCol);
+	App->collisions->AddCollider(jumpAttackCol);
+	chargeAttackCol->setActive(false);
+	idleAttackCol->setActive(false);
+	jumpAttackCol->setActive(false);
 	return ret;
 }
 
@@ -108,126 +125,154 @@ update_status ModulePlayer::PreUpdate() {
 	westLocked = false;
 
 	if (attackWindow->hasPassed() && attackState != CHARGEATTACK)
+	{
 		attackState = NONE;
+		//current_state = IDLE;
+	}
 
 	if (current_state != JUMPING)
 	{
-		if (chargeAttackTimer->hasPassed())
+		
+
+		if (chargeAttackTimer->hasPassed() && attackWindow->hasPassed())
 		{
+			chargeAttackCol->setActive(false);
+			idleAttackCol->setActive(false);
+			jumpAttackCol->setActive(false);
 			current_state = IDLE;
 			attackState = NONE;
 		}
-		if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_UP || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_UP)
-			isRunning = false;
 
-		if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_DOWN)
+		if (current_state == IDLE)
 		{
-			if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_DOWN)
+			if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_UP || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_UP)
+				isRunning = false;
+
+			if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_DOWN)
 			{
-				if (!run_timer->hasPassed())	//Inside the run timer window
+				if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_DOWN)
 				{
-					current_state = RUN_FORWARD;
-					last_frame = forward.frames[0];
-					forward_walking = true;
-					isRunning = true;
-				}
-				else{
-					run_timer->resetTimer();
-					current_state = FORWARD;
-					forward_walking = true;
-					isRunning = false;
-				}
-			}
-			else {
-				if (!isRunning) {
-					current_state = FORWARD;
-					forward_walking = true;
-					if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
-						current_state = UP_FORWARD;
-					else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
-						current_state = DOWN_FORWARD;
-				}
-				else{
-					current_state = RUN_FORWARD;
-					if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
+					if (!run_timer->hasPassed())	//Inside the run timer window
 					{
-						if (attackState != CHARGEATTACK)
-						{
-							charge_it = 0;
-							attackState = CHARGEATTACK;
-							chargeAttackTimer->resetTimer();
-						}
+						current_state = RUN_FORWARD;
+						last_frame = forward.frames[0];
+						forward_walking = true;
+						isRunning = true;
 					}
-						
-				}
-			}
-
-			idle_timer->resetTimer();
-		}
-		else if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
-		{
-			if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
-			{
-				if (!run_timer->hasPassed())
-				{
-					current_state = RUN_BACKWARD;
-					last_frame = forward.frames[0];
-					forward_walking = false;
-					isRunning = true;
-				}
-				else{
-					run_timer->resetTimer();
-					current_state = BACKWARD;
-					forward_walking = false;
-					isRunning = false;
-				}
-			}
-			else {
-				if (!isRunning) {
-					current_state = BACKWARD;
-					forward_walking = false;
-					if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
-						current_state = DOWN_BACKWARD;
-					else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
-						current_state = UP_BACKWARD;
-				}
-				else{
-					current_state = RUN_BACKWARD;
-					if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
-					{
-						if (attackState != CHARGEATTACK)
-						{
-							charge_it = 0;
-							attackState = CHARGEATTACK;
-							chargeAttackTimer->resetTimer();
-						}
+					else{
+						run_timer->resetTimer();
+						current_state = FORWARD;
+						forward_walking = true;
+						isRunning = false;
 					}
 				}
-			}
+				else {
+					if (!isRunning) {
+						current_state = FORWARD;
+						forward_walking = true;
+						if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+							current_state = UP_FORWARD;
+						else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+							current_state = DOWN_FORWARD;
+					}
+					else{
+						current_state = RUN_FORWARD;
+						if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
+						{
+							if (attackState != CHARGEATTACK)
+							{
+								chargeAttackCol->setActive(true);
+								charge_it = 0;
+								attackState = CHARGEATTACK;
+								chargeAttackTimer->resetTimer();
+							}
+						}
 
-			idle_timer->resetTimer();
+					}
+				}
+
+				idle_timer->resetTimer();
+			}
+			else if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
+			{
+				if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
+				{
+					if (!run_timer->hasPassed())
+					{
+						current_state = RUN_BACKWARD;
+						last_frame = forward.frames[0];
+						forward_walking = false;
+						isRunning = true;
+					}
+					else{
+						run_timer->resetTimer();
+						current_state = BACKWARD;
+						forward_walking = false;
+						isRunning = false;
+					}
+				}
+				else {
+					if (!isRunning) {
+						current_state = BACKWARD;
+						forward_walking = false;
+						if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+							current_state = DOWN_BACKWARD;
+						else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+							current_state = UP_BACKWARD;
+					}
+					else{
+						current_state = RUN_BACKWARD;
+						if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
+						{
+							if (attackState != CHARGEATTACK)
+							{
+								chargeAttackCol->setActive(true);
+								charge_it = 0;
+								attackState = CHARGEATTACK;
+								chargeAttackTimer->resetTimer();
+							}
+						}
+					}
+				}
+
+				idle_timer->resetTimer();
+			}
+			else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
+			{
+				isRunning = false;
+				current_state = DOWN;
+				idle_timer->resetTimer();
+			}
+			else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
+			{
+				isRunning = false;
+				current_state = UP;
+				idle_timer->resetTimer();
+			}
+			if (App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
+			{
+				if (isRunning)
+					max_jumpheight = 120;
+				isRunning = false;
+				current_state = JUMPING;
+				jumping_up = true;
+				jump_it = 1;
+			}
+			else if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
+			{
+				if (attackWindow->hasPassed() && attackState != CHARGEATTACK)
+				{
+					idle_timer->resetTimer();
+					current_state = ATTACKING;
+					attackState = IDLEATTACK;
+					attackWindow->resetTimer();
+					App->audio->PlayFx(attack_fx, 0);
+					idleAttackCol->setActive(true);
+				}
+				
+			}
 		}
-		else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
-		{
-			isRunning = false;
-			current_state = DOWN;
-			idle_timer->resetTimer();
-		}
-		else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
-		{
-			isRunning = false;
-			current_state = UP;
-			idle_timer->resetTimer();
-		}
-		if (App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
-		{
-			if (isRunning)
-				max_jumpheight = 120;
-			isRunning = false;
-			current_state = JUMPING;
-			jumping_up = true;
-			jump_it = 1;
-		}
+		
 	}
 	else{			//JUMPING
 		if (alpha_jump*jump_it >= 175 && !jumping_up)
@@ -240,11 +285,18 @@ update_status ModulePlayer::PreUpdate() {
 		{
 			if (attackWindow->hasPassed())
 			{
+				jumpAttackCol->setActive(true);
 				App->audio->PlayFx(attack_fx, 0);
 				attackState = JUMPATTACK;
 				attackWindow->resetTimer();
 			}
 		}
+		if (attackWindow->hasPassed())
+		{
+			attackState = NONE;
+			jumpAttackCol->setActive(false);
+		}
+
 
 		if (alpha_jump*jump_it >= 90)	//Max jump degree
 			jumping_up = false;
@@ -262,7 +314,7 @@ update_status ModulePlayer::Update() {
 	bool ret = true;
 	
 	//Set pivot position
-	
+
 	switch (current_state) {
 	case(FORWARD) :
 		if (!eastLocked)
@@ -324,11 +376,78 @@ update_status ModulePlayer::Update() {
 				current_state = BACKWARD;
 				isRunning = false;
 			}
-		
+
 		}
 		break;
 	}
 
+	pivotCol->SetPosition(pivot.x, pivot.y);
+
+
+	switch (attackState) {
+	case(IDLEATTACK):
+		if (forward_walking)
+			idleAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - 40);
+		else idleAttackCol->SetPosition(pivot.x - idleAttackCol->GetRect()->w, pivot.y - 40);
+		break;
+	case(JUMPATTACK):
+		if (forward_walking)
+			jumpAttackCol->SetPosition(pivot.x + pivot.w + 10, pivot.y - 50 - getJumpHeight(jump_it));
+		else jumpAttackCol->SetPosition(pivot.x - 30, pivot.y - 50 - getJumpHeight(jump_it));
+		break;
+	case(CHARGEATTACK):
+		if (forward_walking)
+			chargeAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - player_height);
+		else chargeAttackCol->SetPosition(pivot.x, pivot.y - player_height);
+		break;
+	}
+
+	if (ret)
+		return UPDATE_CONTINUE;
+	else return UPDATE_ERROR;
+}
+
+update_status ModulePlayer::PostUpdate(){
+
+	return UPDATE_CONTINUE;
+}
+
+
+bool ModulePlayer::CleanUp() {
+	LOG("Unloading player.");
+
+	App->textures->Unload(graphics);
+	return true;
+}
+
+bool ModulePlayer::OnCollision(Collider* a, Collider* b){
+	if (b->getType() == WORLD)
+		northLocked = true;
+	else if (b->getType() == CAMERA)
+	{
+		if (b->GetRect()->y >= pivot.y)
+			southLocked = true;
+		if (b->GetRect()->x <= pivot.x && b->GetRect()->y == 0)
+			westLocked = true;
+		else if (b->GetRect()->x >= pivot.x)
+			eastLocked = true;
+	}
+	
+	return false;
+}
+
+int ModulePlayer::getJumpHeight(int i) {
+	double value = sin((alpha_jump*i*M_PI)/ 180);
+	return (int)(max_jumpheight*value);
+}
+
+int ModulePlayer::getChargeHeight(int i) {
+	double value = sin(8*(i*M_PI) / 180);
+	return (int)15 * value;
+}
+
+bool ModulePlayer::Draw() {
+	bool ret = true;
 	//Draw Animations
 	switch (current_state)
 	{
@@ -337,11 +456,15 @@ update_status ModulePlayer::Update() {
 		{
 			if (forward_walking)
 			{
-				ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
+				if (last_frame.y == 250)
+					ret = App->renderer->Blit(graphics, pivot.x - 16, pivot.y - player_height + 6, &last_frame);
+				else ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &last_frame);
 			}
 			else {
-				if (last_frame.w == 60)
+				if (last_frame.w == 60 && last_frame.y != 250)
 					ret = App->renderer->BlitFlipH(graphics, pivot.x - 30, pivot.y - player_height, &last_frame);
+				else if (last_frame.y == 250)
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 14, pivot.y - player_height + 6, &last_frame);
 				else ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &last_frame);
 			}
 		}
@@ -418,17 +541,19 @@ update_status ModulePlayer::Update() {
 			if (!westLocked)
 				pivot.x--;
 		}
-		
+
 		jump_it++;
 		break;
 	case (RUN_FORWARD) :
 		//pivot.x += 4;
-		
+
 		if (attackState != CHARGEATTACK)
 			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height + 5, &run.GetCurrentFrame());
 		else{
+			if (!eastLocked)
+				pivot.x++;
 			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it) + 10, &chargeattack);
-			charge_it ++;
+			charge_it++;
 		}
 		break;
 	case (RUN_BACKWARD) :
@@ -436,55 +561,28 @@ update_status ModulePlayer::Update() {
 		if (attackState != CHARGEATTACK)
 			ret = App->renderer->BlitFlipH(graphics, pivot.x - 15, pivot.y - player_height + 5, &run.GetCurrentFrame());
 		else{
-			ret = App->renderer->BlitFlipH(graphics, pivot.x - 5, pivot.y - player_height - getChargeHeight(charge_it)+10, &chargeattack);
+			if (!westLocked)
+				pivot.x--;
+			ret = App->renderer->BlitFlipH(graphics, pivot.x - 5, pivot.y - player_height - getChargeHeight(charge_it) + 10, &chargeattack);
 			charge_it++;
+		}
+		break;
+	case(ATTACKING):
+		if (attackState == IDLEATTACK)
+		{
+			last_frame = idleattack.frames[0];
+			if (forward_walking)
+			{
+				ret = App->renderer->Blit(graphics, pivot.x - 10, pivot.y - player_height + 5, &idleattack.frames[1]);
+			}
+			else {
+				ret = App->renderer->BlitFlipH(graphics, pivot.x - 40, pivot.y - player_height + 5, &idleattack.frames[1]);
+			}
+
+			
 		}
 		break;
 	}
 
-	pivotCol->SetPosition(pivot.x, pivot.y);
-
-	if (ret)
-		return UPDATE_CONTINUE;
-	else return UPDATE_ERROR;
-}
-
-update_status ModulePlayer::PostUpdate(){
-
-	return UPDATE_CONTINUE;
-}
-
-
-bool ModulePlayer::CleanUp() {
-	LOG("Unloading player.");
-
-	App->textures->Unload(graphics);
-
-	return true;
-}
-
-bool ModulePlayer::OnCollision(Collider* a, Collider* b){
-	if (b->getType() == WORLD)
-		northLocked = true;
-	else if (b->getType() == CAMERA)
-	{
-		if (b->GetRect()->y >= pivot.y)
-			southLocked = true;
-		if (b->GetRect()->x <= pivot.x && b->GetRect()->y == 0)
-			westLocked = true;
-		else if (b->GetRect()->x >= pivot.x)
-			eastLocked = true;
-	}
-	
-	return false;
-}
-
-int ModulePlayer::getJumpHeight(int i) {
-	double value = sin((alpha_jump*i*M_PI)/ 180);
-	return (int)(max_jumpheight*value);
-}
-
-int ModulePlayer::getChargeHeight(int i) {
-	double value = sin(8*(i*M_PI) / 180);
-	return (int)10 * value;
+	return ret;
 }

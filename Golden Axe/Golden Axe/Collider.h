@@ -7,7 +7,7 @@ class Module;
 struct SDL_Rect;
 
 
-enum colliderType { WORLD = 0, PLAYER, ENEMY, TRIGGER, CAMERA };
+enum colliderType { WORLD = 0, PLAYER, ENEMY, TRIGGER, PATTACK, EATTACK, PHITBOX, EHITBOX, CAMERA, };
 
 
 class Collider {
@@ -16,6 +16,8 @@ private:
 	Module* listener = nullptr;
 	colliderType type;
 	bool _isDirty;
+
+	bool active;
 
 public:
 
@@ -29,6 +31,7 @@ public:
 		type = aType;
 		_isDirty = false;
 		this->listener = listener;
+		active = true;
 	}
 
 	Collider(SDL_Rect* rect, Module* listener, colliderType aType)
@@ -70,6 +73,14 @@ public:
 
 	void SetDirty(bool value) {
 		_isDirty = value;
+	}
+
+	void setActive(bool value) {
+		active = value;
+	}
+
+	bool isActive() {
+		return active;
 	}
 };
 

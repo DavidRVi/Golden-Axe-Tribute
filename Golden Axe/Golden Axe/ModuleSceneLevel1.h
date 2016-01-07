@@ -4,6 +4,7 @@
 #include "Module.h"
 
 class Collider;
+class ModulePlayer;
 
 enum LevelState { BATTLE, NO_BATTLE };
 class ModuleSceneLevel1 : public Module {
@@ -31,6 +32,8 @@ private:
 	Collider* east_wall;
 
 	LevelState current_state;
+
+	ModulePlayer* player;
 
 };
 
