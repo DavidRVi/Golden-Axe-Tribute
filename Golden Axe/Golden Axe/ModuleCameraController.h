@@ -24,11 +24,11 @@ public:
 public:
 	SDL_Texture* interface = nullptr;
 
-private:
 	Collider* westWall;
 	Collider* southWall;
 	Collider* eastWall;
 
+private:
 	Collider* cameraTrigger;
 
 	int triggerCount;
@@ -38,6 +38,15 @@ private:
 	unsigned int go_fx;
 	bool show_go;
 	Timer* go_timer;
+
+	SDL_Rect stage;
+	SDL_Rect magic;
+	SDL_Rect charPortrait;
+	SDL_Rect life_3;
+	SDL_Rect life_2;
+	SDL_Rect life_1;
+	SDL_Rect lifeBar;
+	SDL_Rect magicFlask;
 
 	int encounterCount;
 

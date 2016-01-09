@@ -26,7 +26,13 @@ public:
 	bool CleanUp();
 	bool OnCollision(Collider* a, Collider* b);
 
+	int GetScreenHeight();
+
 	bool Draw();
+
+	int GetLifeBars();
+	int GetLives();
+	int GetMagicFlasks();
 
 public:
 
@@ -71,6 +77,7 @@ private:
 	bool jumping_up;
 
 	Collider* pivotCol;
+	Collider* hitBoxCol;
 
 	Collider* chargeAttackCol;
 	Collider* idleAttackCol;
@@ -83,6 +90,9 @@ private:
 	int getJumpHeight(int i);
 	int getChargeHeight(int i);
 	
+	int lifeBars;
+	int lives;
+	int magicFlasks;
 };
 
 #endif

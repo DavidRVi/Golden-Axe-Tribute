@@ -11,6 +11,7 @@
 void log(const char file[], int line, const char* format, ...);
 struct SDL_Texture;
 
+
 /*
 struct _ParticleData {
 	fPoint position;

@@ -6,6 +6,7 @@
 #include "Point.h"
 #include "ModuleSceneLevel1.h"
 #include "ModuleTextures.h"
+#include "ModulePlayer.h"
 #include "ModuleAudio.h"
 
 ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
@@ -13,6 +14,46 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 	go.frames.push_back({ 0, 80, 70, 40 });
 	go.frames.push_back({ 110, 0, 10, 10 });
 	go.speed = 0.1f;
+
+	stage.x = 0;
+	stage.y = 50;
+	stage.w = 70;
+	stage.h = 10;
+
+	magic.x = 0;
+	magic.y = 0;
+	magic.w = 50;
+	magic.h = 30;
+
+	charPortrait.x = 50;
+	charPortrait.y = 0;
+	charPortrait.w = 20;
+	charPortrait.h = 20;
+
+	life_3.x = 70;
+	life_3.y = 0;
+	life_3.w = 10;
+	life_3.h = 20;
+
+	life_2.x = 80;
+	life_2.y = 0;
+	life_2.w = 10;
+	life_2.h = 20;
+
+	life_1.x = 90;
+	life_1.y = 0;
+	life_1.w = 10;
+	life_1.h = 20;
+
+	lifeBar.x = 0;
+	lifeBar.y = 30;
+	lifeBar.w = 25;
+	lifeBar.h = 10;
+
+	magicFlask.x = 30;
+	magicFlask.y = 30;
+	magicFlask.w = 5;
+	magicFlask.h = 10;
 
 	encounterCount = 0;
 }
@@ -91,6 +132,14 @@ update_status ModuleCameraController::Update() {
 			
 		}
 	}
+
+	if (App->player->GetMagicFlasks() > 0)
+	{
+		App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
+		//Draw magicFlasks depending on number
+	}
+
+	App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
 	return UPDATE_CONTINUE;
 }
 

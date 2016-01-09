@@ -35,6 +35,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	pivot.w = 30;
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
+	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
 	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PATTACK);
 	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
 	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 40, player_height + 20, this, PATTACK);
@@ -89,7 +90,9 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	idleattack.frames.push_back({ 70, 250, 80, 50 });
 	idleattack.speed = 0.1f;
 
-
+	lifeBars = 3;
+	lives = 3;
+	magicFlasks = 1;
 }
 
 ModulePlayer::~ModulePlayer() { 
@@ -107,6 +110,7 @@ bool ModulePlayer::Start() {
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
 
 	App->collisions->AddCollider(pivotCol);
+	App->collisions->AddCollider(hitBoxCol);
 	App->collisions->AddCollider(chargeAttackCol);
 	App->collisions->AddCollider(idleAttackCol);
 	App->collisions->AddCollider(jumpAttackCol);
@@ -381,6 +385,7 @@ update_status ModulePlayer::Update() {
 		break;
 	}
 
+	hitBoxCol->SetPosition(pivot.x, pivot.y - player_height - getJumpHeight(jump_it) + 5);
 	pivotCol->SetPosition(pivot.x, pivot.y);
 
 
@@ -393,12 +398,12 @@ update_status ModulePlayer::Update() {
 	case(JUMPATTACK):
 		if (forward_walking)
 			jumpAttackCol->SetPosition(pivot.x + pivot.w + 10, pivot.y - 50 - getJumpHeight(jump_it));
-		else jumpAttackCol->SetPosition(pivot.x - 30, pivot.y - 50 - getJumpHeight(jump_it));
+		else jumpAttackCol->SetPosition(pivot.x - 50, pivot.y - 50 - getJumpHeight(jump_it));
 		break;
 	case(CHARGEATTACK):
 		if (forward_walking)
 			chargeAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - player_height);
-		else chargeAttackCol->SetPosition(pivot.x, pivot.y - player_height);
+		else chargeAttackCol->SetPosition(pivot.x - 10, pivot.y - player_height);
 		break;
 	}
 
@@ -512,7 +517,7 @@ bool ModulePlayer::Draw() {
 		{
 			if (forward_walking)
 				ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getJumpHeight(jump_it), &jumpattack);
-			else ret = App->renderer->BlitFlipH(graphics, pivot.x - 25, pivot.y - player_height - getJumpHeight(jump_it), &jumpattack);
+			else ret = App->renderer->BlitFlipH(graphics, pivot.x - 50, pivot.y - player_height - getJumpHeight(jump_it), &jumpattack);
 		}
 		else {
 			if (jumping_up)
@@ -585,4 +590,20 @@ bool ModulePlayer::Draw() {
 	}
 
 	return ret;
+}
+
+int ModulePlayer::GetScreenHeight() {
+	return pivot.y;
+}
+
+int ModulePlayer::GetLifeBars() {
+	return lifeBars;
+}
+
+int ModulePlayer::GetLives() {
+	return lives;
+}
+
+int ModulePlayer::GetMagicFlasks() {
+	return magicFlasks;
 }

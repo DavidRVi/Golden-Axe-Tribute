@@ -69,6 +69,9 @@ public:
 
 	virtual bool OnCollision(Collider* a, Collider* b){ return false; };		//Returns true if a needs to be deleted
 
+	virtual bool Draw() { return true; }
+	virtual int GetScreenHeight() { return 0;  }
+
 private:
 	bool active = true;
 };

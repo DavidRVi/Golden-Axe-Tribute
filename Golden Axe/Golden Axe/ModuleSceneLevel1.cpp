@@ -8,9 +8,14 @@
 #include "ModuleCollisions.h"
 #include "ModuleCameraController.h"
 #include "ModuleInput.h"
+#include "ModuleEnemies.h"
+#include "quicksort.h"
 
 ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 {
+
+	activeEnemies = 0;
+
 	ground.x = 0;
 	ground.y = 0;
 	ground.w = 1820;
@@ -37,8 +42,9 @@ bool ModuleSceneLevel1::Start()
 
 	background = App->textures->Load("Game/Sprites/level1.png");
 	//ret = App->audio->PlayMusic("Game/Music/level1.ogg");
-	player = App->player;
-	player->Enable();
+	App->player->Enable();
+	gameElements.push_back(App->player);
+	App->enemies->Enable();
 	App->camController->Enable();
 
 	App->collisions->AddCollider(east_wall);
@@ -48,8 +54,8 @@ bool ModuleSceneLevel1::Start()
 bool ModuleSceneLevel1::CleanUp() {
 	LOG("Unloading Level 1 Scene");
 	App->textures->Unload(background);
-	player->Disable();
-	player = nullptr;
+	App->player->Disable();
+	App->enemies->Disable();
 
 	return true;
 }
@@ -59,8 +65,14 @@ update_status ModuleSceneLevel1::Update() {
 	ret = App->renderer->Blit(background, 0, 0, &parallax, 0.9f);
 	ret = App->renderer->Blit(background, 0, 0, &ground, 1.0f);
 
-	ret = player->Draw();
-	int activeEnemies = 0;
+	if (gameElements.size() >= 2)
+	{
+		quicksort(gameElements, 0, gameElements.size());
+	}
+
+	for (int i = 0; i < gameElements.size(); ++i)
+		gameElements[i]->Draw();
+
 	if (current_state == BATTLE)
 	{
 		if (activeEnemies == 0)
@@ -82,5 +94,6 @@ void ModuleSceneLevel1::ChangeState(LevelState state) {
 
 void ModuleSceneLevel1::spawnEnemies() {
 	//current_state = BATTLE;
+	gameElements.push_back(App->enemies->CreateEnemy(0, 0));
 }
 

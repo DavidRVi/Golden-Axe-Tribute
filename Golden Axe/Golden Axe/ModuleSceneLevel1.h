@@ -1,6 +1,7 @@
 #ifndef __MODULESCENELEVEL1_H__
 #define __MODULESCENELEVEL1_H__
 
+#include <vector>
 #include "Module.h"
 
 class Collider;
@@ -33,7 +34,8 @@ private:
 
 	LevelState current_state;
 
-	ModulePlayer* player;
+	std::vector<Module*> gameElements;
+	int activeEnemies;
 
 };
 

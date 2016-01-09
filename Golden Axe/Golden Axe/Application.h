@@ -23,6 +23,8 @@
 	class ModuleCollisions;
 	class ModuleCameraController;
 
+	class ModuleEnemies;
+
 	class Application
 	{
 	public:
@@ -46,6 +48,7 @@
 		ModuleSceneIntro* intro;
 		ModuleSceneLevel1* level1;
 		ModulePlayer*		player;
+		ModuleEnemies*		enemies;
 
 		ModuleCollisions*	collisions;
 
