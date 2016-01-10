@@ -11,7 +11,7 @@ int divide(vector<Module*> &v, int i, int j) {
 
 	for (right = i + 1; right < j; right++)
 	{
-		if (v[right]->GetScreenHeight() <= x)
+		if (v[right]->GetScreenHeight() < x)
 		{
 			left++;
 			temp = v[left];

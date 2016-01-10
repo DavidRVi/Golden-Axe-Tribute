@@ -47,7 +47,7 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 
 	lifeBar.x = 0;
 	lifeBar.y = 30;
-	lifeBar.w = 25;
+	lifeBar.w = 24;
 	lifeBar.h = 10;
 
 	magicFlask.x = 30;
@@ -75,7 +75,7 @@ bool ModuleCameraController::Start() {
 	App->collisions->AddCollider(westWall);
 	App->collisions->AddCollider(eastWall);
 
-	cameraTrigger = new Collider(westWall->GetRect()->x + (SCREEN_WIDTH / 2), 0, (SCREEN_WIDTH / 2), 240, this, TRIGGER);
+	cameraTrigger = new Collider(westWall->GetRect()->x + (SCREEN_WIDTH / 2) + 20, 0, (SCREEN_WIDTH / 2) - 20 , 240, this, TRIGGER);
 	App->collisions->AddCollider(cameraTrigger);
 
 	triggerCount = 0;
@@ -86,22 +86,24 @@ bool ModuleCameraController::Start() {
 
 update_status ModuleCameraController::PreUpdate() {
 
+	/* //debug
+	
 	int speed = 3;
 	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN || App->input->GetKey(SDL_SCANCODE_L) == KEY_REPEAT)
 	{
 		App->renderer->camera.x -= speed;
-		westWall->SetPosition(westWall->GetRect()->x+1, 0);
+		westWall->SetPosition(westWall->GetRect()->x + 1, 0);
 		eastWall->SetPosition(eastWall->GetRect()->x + 1, 0);
 		//cameraTrigger->SetPosition(cameraTrigger->GetRect()->x + 1, 0);
 	}
 	else if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN || App->input->GetKey(SDL_SCANCODE_J) == KEY_REPEAT)
 	{
 		App->renderer->camera.x += speed;
-		westWall->SetPosition(westWall->GetRect()->x-1, 0);
+		westWall->SetPosition(westWall->GetRect()->x - 1, 0);
 		eastWall->SetPosition(eastWall->GetRect()->x - 1, 0);
 		//cameraTrigger->SetPosition(cameraTrigger->GetRect()->x - 1, 0);
 	}
-
+	*/
 	return UPDATE_CONTINUE;
 }
 
@@ -120,7 +122,7 @@ update_status ModuleCameraController::Update() {
 		else {
 			if (encounterCount <= 5)
 			{
-				cameraTrigger = new Collider(westWall->GetRect()->x + (SCREEN_WIDTH / 2), 0, (SCREEN_WIDTH / 2), 240, this, TRIGGER);
+				cameraTrigger = new Collider(westWall->GetRect()->x + (SCREEN_WIDTH / 2) + 10, 0, (SCREEN_WIDTH / 2) - 10, 240, this, TRIGGER);
 				App->collisions->AddCollider(cameraTrigger);
 				triggerCount = 0;
 				show_go = false;
@@ -133,13 +135,39 @@ update_status ModuleCameraController::Update() {
 		}
 	}
 
-	if (App->player->GetMagicFlasks() > 0)
+	//--------------- INTERFACE ------------------
+	int magicFlasks = App->player->GetMagicFlasks();
+	if (magicFlasks > 0)
 	{
 		App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
 		//Draw magicFlasks depending on number
+		for (int i = 0; i < magicFlasks; i++)
+			App->renderer->Blit(interface, westWall->GetRect()->x + 88 + (i*(magicFlask.w + 3)), 19, &magicFlask);
 	}
 
 	App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
+	App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH/2) - 30, 215, &charPortrait);
+
+	switch (App->player->GetLives())
+	{
+	case(3) :
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_3);
+		break;
+	case(2):
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_2);
+		break;
+	case(1):
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_1);
+		break;
+	}
+
+	int lifeBars = App->player->GetLifeBars();
+
+	for (int i = 0; i < lifeBars; i++)
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 60 - (i*lifeBar.w), 215, &lifeBar);
+
+	//-----------------------------------------
+
 	return UPDATE_CONTINUE;
 }
 

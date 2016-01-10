@@ -41,7 +41,7 @@ bool ModuleSceneLevel1::Start()
 	LOG("Loading Level 1 Scene");
 
 	background = App->textures->Load("Game/Sprites/level1.png");
-	//ret = App->audio->PlayMusic("Game/Music/level1.ogg");
+	ret = App->audio->PlayMusic("Game/Music/level1.ogg");
 	App->player->Enable();
 	gameElements.push_back(App->player);
 	App->enemies->Enable();

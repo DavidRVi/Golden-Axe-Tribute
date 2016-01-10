@@ -23,4 +23,9 @@ public:
 			current_frame = 0.0f;
 		return frames[(int)current_frame];
 	}
+
+	void resetAnimation()
+	{
+		current_frame = 0.0f;
+	}
 };
