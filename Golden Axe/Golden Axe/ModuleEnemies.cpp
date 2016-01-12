@@ -21,6 +21,14 @@ update_status ModuleEnemies::PreUpdate() {
 	return ret;
 }
 
+update_status ModuleEnemies::Update() {
+	update_status ret = UPDATE_CONTINUE;
+	for (vector<EnemyState*>::iterator it = enemies.begin(); it != enemies.end(); ++it)
+		ret = (*it)->first->Update();
+
+	return ret;
+}
+
 update_status ModuleEnemies::PostUpdate() {
 	update_status ret = UPDATE_CONTINUE;
 

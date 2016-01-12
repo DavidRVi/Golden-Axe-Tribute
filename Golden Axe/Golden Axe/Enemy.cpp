@@ -8,7 +8,7 @@
 Enemy::Enemy() {
 
 	charge_it = 0;
-	falling_timer = new Timer(1000);
+	falling_timer = new Timer(500);
 	current_state = IDLE;
 	forward_walking = false;
 
@@ -33,6 +33,11 @@ Enemy::Enemy() {
 	lay_down.w = 100;
 	lay_down.h = 40;
 
+	recovery.x = 430;
+	recovery.y = 230;
+	recovery.w = 70;
+	recovery.h = 70;
+
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, ENEMY);
 	hitBoxCol = new Collider(pivot.x, pivot.y - enemyHeight, pivot.w, enemyHeight, this, EHITBOX);
 	App->collisions->AddCollider(pivotCol);
@@ -51,10 +56,47 @@ bool Enemy::CleanUp() {
 
 update_status Enemy::PreUpdate() {
 	update_status ret = UPDATE_CONTINUE;
-		
+	switch (current_state) {
+	case(FALLING_DOWN) :
+		if (falling_timer->hasPassed())
+		{
+			current_state = LAY_DOWN;
+			falling_timer->resetTimer();
+		}
+			
+		break;
+	case(LAY_DOWN):
+		if (falling_timer->hasPassed())
+		{
+			current_state = RECOVERING;
+			falling_timer->resetTimer();
+			hitBoxCol->setActive(true);
+		}
+	case(RECOVERING):
+		if (falling_timer->hasPassed())
+		{
+			current_state = IDLE;
+		}
+	}
 	return ret;
 }
 
+update_status Enemy::Update() {
+	update_status ret = UPDATE_CONTINUE;
+
+	switch (current_state) {
+	case(FALLING_DOWN):
+		if (forward_walking)
+			pivot.x -=3;
+		else pivot.x +=3;
+		break;
+	}
+
+	pivotCol->SetPosition(pivot.x, pivot.y);
+	hitBoxCol->SetPosition(pivot.x, pivot.y - enemyHeight);
+
+	return ret;
+}
 
 bool Enemy::Draw() {
 	bool ret = true;
@@ -65,13 +107,22 @@ bool Enemy::Draw() {
 		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - enemyHeight, &idle.GetCurrentFrame());
 		break;
 	case(FALLING_DOWN) :
-		if (!falling_timer->hasPassed()) {
 			if (forward_walking)
-				ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 30 - GetFallHeight(charge_it), &falling_down);
-			else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - 30 - GetFallHeight(charge_it), &falling_down);
+				ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 60 - GetFallHeight(charge_it), &falling_down);
+			else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - 60 - GetFallHeight(charge_it), &falling_down);
 			charge_it++;
-		}
-		else current_state = IDLE;
+		break;
+
+	case(LAY_DOWN):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x + 10, pivot.y - lay_down.h + 15, &lay_down);
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - lay_down.h + 15, &lay_down);
+		break;
+
+	case(RECOVERING):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x + 10, pivot.y - 60, &recovery);
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - 60, &recovery);
 		break;
 	}
 
@@ -85,9 +136,10 @@ int Enemy::GetScreenHeight() const {
 bool Enemy::OnCollision(Collider* a, Collider* b) {
 	if (b->getType() == PFINAL)
 	{
-		charge_it = 0;
+		charge_it = 5;
 		current_state = FALLING_DOWN;
 		falling_timer->resetTimer();
+		hitBoxCol->setActive(false);
 		if (b->GetRect()->x > pivot.x)
 			forward_walking = true;
 		else forward_walking = false;
@@ -97,5 +149,5 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 
 int Enemy::GetFallHeight(int i) const {
 	double value = sin(8 * (i*M_PI) / 180);
-	return (int)15 * value;
+	return (int)20 * value;
 }

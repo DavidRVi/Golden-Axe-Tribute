@@ -49,15 +49,8 @@
 		ModuleSceneLevel1* level1;
 		ModulePlayer*		player;
 		ModuleEnemies*		enemies;
-
 		ModuleCollisions*	collisions;
-
 		ModuleCameraController* camController;
-		/*
-		ModulePlayer* player;
-		ModuleScene* scene;
-		ModuleParticles* particles;
-		ModuleCollisions* collisions; */
 
 	private:
 

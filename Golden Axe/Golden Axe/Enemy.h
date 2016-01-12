@@ -10,7 +10,7 @@ class Collider;
 struct SDL_Rect;
 class Timer;
 
-enum state { IDLE = 0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, ATTACKING, FALLING_DOWN };
+enum state { IDLE = 0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, ATTACKING, FALLING_DOWN, LAY_DOWN, RECOVERING};
 class Enemy : public Module {
 private:
 	SDL_Rect pivot;
@@ -31,6 +31,7 @@ public:
 
 	bool CleanUp();
 	update_status PreUpdate();
+	update_status Update();
 	bool Draw();
 	bool OnCollision(Collider* a, Collider* b);
 
@@ -41,6 +42,7 @@ public:
 	Animation forward;
 	SDL_Rect falling_down;
 	SDL_Rect lay_down;
+	SDL_Rect recovery;
 
 	SDL_Rect chargeAttack;
 	Animation idleAttack;

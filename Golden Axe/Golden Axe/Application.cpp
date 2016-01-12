@@ -8,12 +8,6 @@
 #include "ModuleSceneIntro.h"
 #include "ModuleSceneLevel1.h"
 #include "ModulePlayer.h"
-/*
-#include "ModuleScene.h"
-#include "ModulePlayer.h"
-#include "ModuleParticles.h"
-*/
-
 #include "ModuleCollisions.h"
 #include "ModuleCameraController.h"
 #include "ModuleEnemies.h"
@@ -30,10 +24,8 @@ Application::Application()
 	modules.push_back(textures = new ModuleTextures());
 	modules.push_back(audio = new ModuleAudio());
 
+
 	modules.push_back(intro = new ModuleSceneIntro(false));
-
-
-
 	modules.push_back(player = new ModulePlayer(false));
 	modules.push_back(enemies = new ModuleEnemies(false));
 	modules.push_back(level1 = new ModuleSceneLevel1(false));
@@ -41,19 +33,6 @@ Application::Application()
 	modules.push_back(fade = new ModuleFadeToBlack());
 
 	modules.push_back(collisions = new ModuleCollisions());
-	//Game Modules
-	/*
-	modules.push_back(scene = new ModuleScene());
-
-	modules.push_back(player = new ModulePlayer(false));
-	
-
-	// Particle module
-	modules.push_back(particles = new ModuleParticles());
-
-	modules.push_back(collisions = new ModuleCollisions());*/
-
-
 }
 
 Application::~Application()
