@@ -20,7 +20,7 @@ private:
 	bool collisionMatrix[CAMERA + 1][CAMERA + 1];
 
 	bool _debug;
-	bool DetectCollision(Collider* a, Collider* b);
+	bool DetectCollision(Collider* a, Collider* b) const;
 
 public:
 	ModuleCollisions(bool start_enabled = true);

@@ -46,6 +46,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_mixer\include;D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_image\include;D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_mixer\libx86;D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_image\libx86;D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL\libx86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -79,6 +81,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>SDL2_image.lib;SDL2_mixer.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

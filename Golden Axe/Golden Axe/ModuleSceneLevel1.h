@@ -19,6 +19,8 @@ public:
 
 	void ChangeState(LevelState state);
 	void spawnEnemies();			//Always spawn 2 enemies right of the screen
+	bool DeleteEnemy(const Module* enemy);	
+
 
 public:
 
@@ -28,9 +30,11 @@ public:
 
 private:
 
-	Collider* west_wall;
-	Collider* centre_wall;
-	Collider* east_wall;
+	Collider* background_wall1;
+	Collider* background_wall2;
+	Collider* rightLimiter;
+	Collider* leftLimiter;
+	Collider* background_wall3;
 
 	LevelState current_state;
 

@@ -40,7 +40,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
 	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
-	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PATTACK);
+	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PFINAL);
 	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
 	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 40, player_height + 20, this, PATTACK);
 
@@ -99,22 +99,32 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	waitingCombo2.y = 250;
 	waitingCombo2.w = 70;
 	waitingCombo2.h = 50;
+	
+	waitingCombo3.x = 0;
+	waitingCombo3.y = 250;
+	waitingCombo3.w = 60;
+	waitingCombo3.h = 50;
 
 	combo2.frames.push_back({ 150, 250, 70, 50 });
 	combo2.frames.push_back({ 220, 250, 80, 50 });
 	combo2.frames.push_back({ 300, 250, 80, 50 });
 	combo2.speed = 0.09f;
 
+	combo3.frames.push_back({ 0, 320, 60, 70 });
+	combo3.frames.push_back({ 60, 310, 60, 80 });
+	combo3.frames.push_back({ 120, 330, 70, 60 });
+	combo3.speed = 0.15f;
+
 	lifeBars = 3;
 	lives = 3;
 	magicFlasks = 1;
 
-	bool debug = false;
+	debug = false;
 	if (debug)
 	{
 		RELEASE(attackAnimation);
 		attackAnimation = new Timer(5000);
-		combo2.speed = 0.01f;
+		combo3.speed = 0.01f;
 	}
 }
 
@@ -148,10 +158,15 @@ bool ModulePlayer::Start() {
 
 update_status ModulePlayer::PreUpdate() {
 	
-	southLocked = false;
-	northLocked = false;
-	eastLocked = false;
-	westLocked = false;
+	if (chargeAttackTimer->hasPassed())
+	{
+		southLocked = false;
+		northLocked = false;
+		eastLocked = false;
+		westLocked = false;
+	}
+	
+	
 	if (current_state == ATTACKING)
 	{
 		if (attackAnimation->hasPassed())
@@ -166,6 +181,13 @@ update_status ModulePlayer::PreUpdate() {
 					attackWindow->resetTimer();
 					break;
 				case(COMBO_2) :
+					//Check the distance from enemy...
+					attackState = COMBO_3;
+					current_state = WAITING_INPUT;
+					attackWindow->resetTimer();
+					break;
+				case(COMBO_3) :
+					attackState = FINISH_AXE;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
 					break;
@@ -189,6 +211,12 @@ update_status ModulePlayer::PreUpdate() {
 	if (current_state != JUMPING)
 	{
 		
+		if (!chargeAttackTimer->hasPassed() && hasHit)
+		{
+			if (forward_walking)
+				eastLocked = true;
+			else westLocked = true;
+		}
 
 		if (chargeAttackTimer->hasPassed() && attackWindow->hasPassed())
 		{
@@ -197,6 +225,7 @@ update_status ModulePlayer::PreUpdate() {
 			jumpAttackCol->setActive(false);
 			current_state = IDLE;
 			attackState = NONE;
+			hasHit = false;
 		}
 
 		if (current_state == IDLE)
@@ -308,7 +337,7 @@ update_status ModulePlayer::PreUpdate() {
 			if (App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
 			{
 				if (isRunning)
-					max_jumpheight = 120;
+					max_jumpheight = 140;
 				isRunning = false;
 				current_state = JUMPING;
 				jumping_up = true;
@@ -337,11 +366,25 @@ update_status ModulePlayer::PreUpdate() {
 				current_state = ATTACKING;
 				attackWindow->resetTimer();
 				attackAnimation->resetTimer();
-				combo2.resetAnimation();
+				if (attackState == COMBO_2)
+					combo2.resetAnimation();
+				else if (attackState == COMBO_3)
+					combo3.resetAnimation();
+				else if (attackState == FINISH_AXE)
+				{
+					idleattack.resetAnimation();
+					attackState = IDLEATTACK;
+				}
+					
 				// Play fx
 				idleAttackCol->setActive(true);
 			}
-			
+			else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
+			{
+				current_state = IDLE;
+				attackState = NONE;
+				hasHit = false;
+			}
 		}
 		
 	}
@@ -372,19 +415,6 @@ update_status ModulePlayer::PreUpdate() {
 		if (alpha_jump*jump_it >= 90)	//Max jump degree
 			jumping_up = false;
 	}
-	
-
-	/* //debug
-	if (App->input->GetKey(SDL_SCANCODE_4) == KEY_DOWN)
-		magicFlasks = 4;
-	if (App->input->GetKey(SDL_SCANCODE_3) == KEY_DOWN)
-		magicFlasks = 3;
-	if (App->input->GetKey(SDL_SCANCODE_2) == KEY_DOWN)
-		magicFlasks = 2;
-	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)
-		magicFlasks = 1;
-	if (App->input->GetKey(SDL_SCANCODE_0) == KEY_DOWN)
-		magicFlasks = 0;*/
 	
 	if (idle_timer->hasPassed())
 		repaint_frame = false;
@@ -503,33 +533,38 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 	{
 		if (b->GetRect()->y >= pivot.y)
 			southLocked = true;
-		if (b->GetRect()->x <= pivot.x && b->GetRect()->y == 0)
+		else if (b->GetRect()->x <= pivot.x)
 			westLocked = true;
 		else if (b->GetRect()->x >= pivot.x)
 			eastLocked = true;
 	}
 
-	if (a->getType() == PATTACK) {
-		if (attackState == IDLEATTACK)
+	if (a->getType() == PATTACK || a->getType() == PFINAL) {
+		if (inRange(b->GetListener()->GetScreenHeight()))
 		{
-			idleAttackCol->setActive(false);
-			attackWindow->resetTimer();
-			/*
-			attackState = COMBO_2;
-			current_state = WAITING_INPUT;*/
-			hasHit = true;
+			if (attackState != JUMPATTACK && attackState != CHARGEATTACK)
+			{
+				idleAttackCol->setActive(false);
+				attackWindow->resetTimer();
+				hasHit = true;
+			}
+			else if (attackState == CHARGEATTACK)
+			{
+				chargeAttackCol->setActive(false);
+				hasHit = true;
+			}
 		}
 	}
 	
 	return false;
 }
 
-int ModulePlayer::getJumpHeight(int i) {
+int ModulePlayer::getJumpHeight(int i) const{
 	double value = sin((alpha_jump*i*M_PI)/ 180);
 	return (int)(max_jumpheight*value);
 }
 
-int ModulePlayer::getChargeHeight(int i) {
+int ModulePlayer::getChargeHeight(int i) const{
 	double value = sin(8*(i*M_PI) / 180);
 	return (int)15 * value;
 }
@@ -633,8 +668,6 @@ bool ModulePlayer::Draw() {
 		jump_it++;
 		break;
 	case (RUN_FORWARD) :
-		//pivot.x += 4;
-
 		if (attackState != CHARGEATTACK)
 			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height + 5, &run.GetCurrentFrame());
 		else{
@@ -645,7 +678,6 @@ bool ModulePlayer::Draw() {
 		}
 		break;
 	case (RUN_BACKWARD) :
-		//pivot.x -= 4;
 		if (attackState != CHARGEATTACK)
 			ret = App->renderer->BlitFlipH(graphics, pivot.x - 15, pivot.y - player_height + 5, &run.GetCurrentFrame());
 		else{
@@ -656,6 +688,8 @@ bool ModulePlayer::Draw() {
 		}
 		break;
 	case(ATTACKING) :
+		if (debug)
+			attackState = COMBO_3;
 		SDL_Rect frame;
 		switch (attackState) {
 		case(IDLEATTACK):
@@ -689,12 +723,29 @@ bool ModulePlayer::Draw() {
 			}
 			else  {
 				if (frame.x == combo2.frames[1].x)
-					ret = App->renderer->BlitFlipH(graphics, pivot.x - 17, pivot.y - player_height + 5, &frame);
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 46, pivot.y - player_height + 6, &frame);
 				else if (frame.x == combo2.frames[2].x)
-					ret = App->renderer->BlitFlipH(graphics, pivot.x - 20, pivot.y - player_height + 5, &frame);
-				else ret = App->renderer->BlitFlipH(graphics, pivot.x - 10, pivot.y - player_height + 5, &frame);
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 50, pivot.y - player_height + 6, &frame);
+				else ret = App->renderer->BlitFlipH(graphics, pivot.x - 13, pivot.y - player_height + 6, &frame);
 			}
 			break;
+		case(COMBO_3) :
+			frame = combo3.GetCurrentFrame();
+			if (forward_walking)
+			{
+				if (frame.x == combo3.frames[0].x)
+					ret = App->renderer->Blit(graphics, pivot.x - 12, pivot.y - player_height - 10, &frame);
+				else if (frame.x == combo3.frames[1].x)
+					ret = App->renderer->Blit(graphics, pivot.x + 4, pivot.y - player_height - 20, &frame);
+				else ret = App->renderer->Blit(graphics, pivot.x + 2, pivot.y - player_height, &frame);
+			}
+			else {
+				if (frame.x == combo3.frames[0].x)
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 14, pivot.y - player_height - 9, &frame);
+				else if (frame.x == combo3.frames[1].x)
+					ret = App->renderer->BlitFlipH(graphics, pivot.x - 32, pivot.y - player_height - 19, &frame);
+				else ret = App->renderer->BlitFlipH(graphics, pivot.x - 40, pivot.y - player_height + 1, &frame);
+			}
 		}
 		break;
 	case(WAITING_INPUT):
@@ -705,7 +756,25 @@ bool ModulePlayer::Draw() {
 				ret = App->renderer->Blit(graphics, pivot.x - 25, pivot.y - player_height + 5, &waitingCombo2);
 			}
 			else {
-				ret = App->renderer->BlitFlipH(graphics, pivot.x - 10, pivot.y - player_height + 6, &waitingCombo2);
+				ret = App->renderer->BlitFlipH(graphics, pivot.x - 13, pivot.y - player_height + 6, &waitingCombo2);
+			}
+			break;
+		case(COMBO_3):
+			if (forward_walking)
+			{
+				ret = App->renderer->Blit(graphics, pivot.x - 16, pivot.y - player_height + 6, &waitingCombo3);
+			}
+			else {
+				ret = App->renderer->BlitFlipH(graphics, pivot.x - 14, pivot.y - player_height + 6, &waitingCombo3);
+			}
+			break;
+		case(FINISH_AXE):
+			if (forward_walking)
+			{
+				ret = App->renderer->Blit(graphics, pivot.x + 2, pivot.y - player_height, &combo3.frames[2]);
+			}
+			else {
+				ret = App->renderer->BlitFlipH(graphics, pivot.x - 40, pivot.y - player_height + 1, &combo3.frames[2]);
 			}
 			break;
 		}
@@ -715,25 +784,29 @@ bool ModulePlayer::Draw() {
 	return ret;
 }
 
-int ModulePlayer::GetScreenHeight() {
+int ModulePlayer::GetScreenHeight() const {
 	return pivot.y;
 }
 
-int ModulePlayer::GetLifeBars() {
+int ModulePlayer::GetLifeBars() const {
 	if (lifeBars >= 0)
 		return lifeBars;
 	else return 0;
 }
 
-int ModulePlayer::GetLives() {
+int ModulePlayer::GetLives()  const{
 	return lives;
 }
 
-int ModulePlayer::GetMagicFlasks() {
+int ModulePlayer::GetMagicFlasks() const {
 	return magicFlasks;
 }
 
 void ModulePlayer::AddMagicFlask() {
 	if (magicFlasks < 4)
 		magicFlasks++;
+}
+
+bool ModulePlayer::inRange(int y) const {
+	return ((y - 5) <= pivot.y) && ((y + 5) >= pivot.y);
 }

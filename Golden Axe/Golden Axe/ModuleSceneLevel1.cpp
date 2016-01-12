@@ -26,7 +26,11 @@ ModuleSceneLevel1::ModuleSceneLevel1(bool enabled) : Module(enabled)
 	parallax.w = 1820;
 	parallax.h = 240;
 
-	east_wall = new Collider(0, 0, 780, 160, this, WORLD);
+	background_wall1 = new Collider(0, 150, 880, 10, this, WORLD);
+	background_wall2 = new Collider(890, 180, 485, 10, this, WORLD);
+	background_wall3 = new Collider(1375, 95, 425, 10, this, WORLD);
+	leftLimiter = new Collider(880, 150, 10, 30, this, CAMERA);
+	rightLimiter = new Collider(1375, 95, 10, 90, this, CAMERA);
 
 	current_state = NO_BATTLE;
 }
@@ -41,13 +45,17 @@ bool ModuleSceneLevel1::Start()
 	LOG("Loading Level 1 Scene");
 
 	background = App->textures->Load("Game/Sprites/level1.png");
-	ret = App->audio->PlayMusic("Game/Music/level1.ogg");
+	//ret = App->audio->PlayMusic("Game/Music/level1.ogg");
 	App->player->Enable();
 	gameElements.push_back(App->player);
 	App->enemies->Enable();
 	App->camController->Enable();
 
-	App->collisions->AddCollider(east_wall);
+	App->collisions->AddCollider(background_wall1);
+	App->collisions->AddCollider(background_wall2);
+	App->collisions->AddCollider(background_wall3);
+	App->collisions->AddCollider(leftLimiter);
+	App->collisions->AddCollider(rightLimiter);
 	return ret;
 }
 
@@ -56,6 +64,12 @@ bool ModuleSceneLevel1::CleanUp() {
 	App->textures->Unload(background);
 	App->player->Disable();
 	App->enemies->Disable();
+
+	/*
+	for (vector<Module*>::iterator it = gameElements.begin(); it != gameElements.end();)
+		*it = nullptr;*/
+
+	gameElements.clear();
 
 	return true;
 }
@@ -94,6 +108,21 @@ void ModuleSceneLevel1::ChangeState(LevelState state) {
 
 void ModuleSceneLevel1::spawnEnemies() {
 	//current_state = BATTLE;
-	gameElements.push_back(App->enemies->CreateEnemy(0, 0));
+	gameElements.push_back(App->enemies->CreateEnemy());
+}
+
+bool ModuleSceneLevel1::DeleteEnemy(const Module* enemy) {
+	bool hasDeleted = false;
+	for (vector<Module*>::iterator it = gameElements.begin(); it != gameElements.end() && !hasDeleted; )
+	{
+		if (*it == enemy)
+		{
+			it = gameElements.erase(it);
+			hasDeleted = true;
+		}
+		else ++it;
+	}
+
+	return hasDeleted;
 }
 

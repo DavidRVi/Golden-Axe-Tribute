@@ -7,7 +7,7 @@ class Module;
 struct SDL_Rect;
 
 
-enum colliderType { WORLD = 0, PLAYER, ENEMY, TRIGGER, PATTACK, EATTACK, PHITBOX, EHITBOX, CAMERA, };
+enum colliderType { WORLD = 0, PLAYER, ENEMY, TRIGGER, PATTACK, EATTACK, PFINAL, EFINAL, PHITBOX, EHITBOX, CAMERA, };
 
 
 class Collider {

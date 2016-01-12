@@ -7,6 +7,7 @@
 
 ModuleInput::ModuleInput() : Module(), mouse({ 0, 0 }), mouse_motion({ 0, 0 })
 {
+	keyboardEvent = false;
 	keyboard = new KeyState[MAX_KEYS];
 	memset(keyboard, KEY_IDLE, sizeof(KeyState)* MAX_KEYS);
 	memset(mouse_buttons, KEY_IDLE, sizeof(KeyState)* NUM_MOUSE_BUTTONS);
@@ -44,6 +45,7 @@ bool ModuleInput::Start()
 // Called each loop iteration
 update_status ModuleInput::PreUpdate()
 {
+	keyboardEvent = false;
 	static SDL_Event event;
 
 	mouse_motion = { 0, 0 };
@@ -119,6 +121,10 @@ update_status ModuleInput::PreUpdate()
 			mouse_motion.y = event.motion.yrel / SCREEN_SIZE;
 			mouse.x = event.motion.x / SCREEN_SIZE;
 			mouse.y = event.motion.y / SCREEN_SIZE;
+			break;
+
+		case SDL_KEYDOWN:
+			keyboardEvent = true;
 			break;
 		}
 	}

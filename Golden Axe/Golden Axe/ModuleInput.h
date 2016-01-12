@@ -60,11 +60,17 @@ public:
 	// Check for window events last frame
 	bool GetWindowEvent(EventWindow code) const;
 
+	bool GetKeyboardEvent()	const
+	{
+		return keyboardEvent;
+	}
+
 	// Get mouse / axis position
 	const iPoint& GetMouseMotion() const;
 	const iPoint& GetMousePosition() const;
 
 private:
+	bool		keyboardEvent;
 	bool		windowEvents[WE_COUNT];
 	KeyState*	keyboard;
 	KeyState	mouse_buttons[NUM_MOUSE_BUTTONS];

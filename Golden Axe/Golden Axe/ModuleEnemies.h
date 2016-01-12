@@ -3,6 +3,9 @@
 
 #include "Module.h"
 #include "Application.h"
+#include <vector>
+
+typedef std::pair<Module*, bool> EnemyState;
 
 class ModuleEnemies : public Module {
 private:
@@ -12,11 +15,18 @@ public:
 	~ModuleEnemies();
 
 	bool Start();
+	update_status PreUpdate();
+	update_status PostUpdate();
 	bool CleanUp();
+	Module* CreateEnemy();		//Creates an enemy and returns it
+	void DestroyMe(const Module* enemy);
 
 	SDL_Texture* graphics = nullptr;
 	
-	Module* CreateEnemy(int x, int y);		//Creates an enemy in position x, y and returns it
+	
+
+private:
+	std::vector<EnemyState*> enemies;
 };
 
 #endif
