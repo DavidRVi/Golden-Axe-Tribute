@@ -11,7 +11,7 @@ struct SDL_Texture;
 class Collider;
 
 enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, ATTACKING, WAITING_INPUT };
-enum AttackState { NONE = 0, JUMPATTACK, IDLEATTACK, CHARGEATTACK, COMBO_2, COMBO_3, COMBO_4, COMBO_5, PICKUP, FINISH_AXE };
+enum AttackState { NONE = 0, JUMPATTACK, IDLEATTACK, CHARGEATTACK, COMBO_2, COMBO_3, FINISH_AXE };
 
 class ModulePlayer : public Module
 {
@@ -88,6 +88,7 @@ private:
 	Collider* chargeAttackCol;
 	Collider* idleAttackCol;
 	Collider* jumpAttackCol;
+	Collider* finalComboCol;
 
 	AttackState attackState;
 	Timer* attackAnimation;

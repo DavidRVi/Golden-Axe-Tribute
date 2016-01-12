@@ -111,9 +111,11 @@ update_status ModuleCollisions::Update() {
 				case(EHITBOX):
 					SDL_SetRenderDrawColor(App->renderer->renderer, 255, 0, 0, 100);
 					break;
+				case(PFINAL):
 				case(PATTACK):
 					SDL_SetRenderDrawColor(App->renderer->renderer, 0, 255, 255, 100);
 					break;
+				case(EFINAL):
 				case(EATTACK):
 					SDL_SetRenderDrawColor(App->renderer->renderer, 255, 0, 255, 100);
 					break;

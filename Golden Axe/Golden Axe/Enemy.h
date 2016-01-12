@@ -6,27 +6,37 @@
 #include "Animation.h"
 #include "Point.h"
 
+class ModulePlayer;
 class Collider;
 struct SDL_Rect;
 class Timer;
 
-enum state { IDLE = 0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, ATTACKING, FALLING_DOWN, LAY_DOWN, RECOVERING};
+enum Enemy_state { EIDLE = 0, EFORWARD, EBACKWARD, EUP, EDOWN, EUP_FORWARD, EUP_BACKWARD, EDOWN_FORWARD, EDOWN_BACKWARD, EATTACKING, EFALLING_DOWN, ELAY_DOWN, ERECOVERING, EHIT};
 class Enemy : public Module {
 private:
 	SDL_Rect pivot;
 	int enemyHeight;
 
-	state current_state;
+	Enemy_state current_state;
 	bool forward_walking;
 
 	int lifePoints;
 
 	Timer* falling_timer;
+	Timer* hit_timer;
+	Timer* attackTimer;
 	int charge_it;
 	int GetFallHeight(int i) const;
+	bool inRange(int y) const;
+
+	ModulePlayer* player;
+
+	bool debug;
+
+	int y_limit;
 public:
 
-	Enemy();
+	Enemy(int y, int h);
 	~Enemy();
 
 	bool CleanUp();
@@ -46,7 +56,7 @@ public:
 
 	SDL_Rect chargeAttack;
 	Animation idleAttack;
-	Animation kickAttack;
+	Collider* attackCol;
 	Collider* pivotCol;
 	Collider* hitBoxCol;
 

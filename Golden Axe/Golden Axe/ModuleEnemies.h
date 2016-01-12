@@ -19,7 +19,7 @@ public:
 	update_status Update();
 	update_status PostUpdate();
 	bool CleanUp();
-	Module* CreateEnemy();		//Creates an enemy and returns it
+	Module* CreateEnemy(int y, int h);		//Creates an enemy and returns it
 	void DestroyMe(const Module* enemy);
 
 	SDL_Texture* graphics = nullptr;

@@ -69,8 +69,8 @@ bool ModuleEnemies::Start() {
 	return true;
 }
 
-Module* ModuleEnemies::CreateEnemy() {
-	Enemy* e = new Enemy();
+Module* ModuleEnemies::CreateEnemy(int y, int h) {
+	Enemy* e = new Enemy(y, h);
 	enemies.push_back(new EnemyState(e, false));
 
 	return e;

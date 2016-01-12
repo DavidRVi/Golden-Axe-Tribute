@@ -18,7 +18,7 @@ public:
 	bool CleanUp();
 
 	void ChangeState(LevelState state);
-	void spawnEnemies();			//Always spawn 2 enemies right of the screen
+	void spawnEnemies(int y, int h);			//Always spawn 2 enemies right of the screen
 	bool DeleteEnemy(const Module* enemy);	
 
 

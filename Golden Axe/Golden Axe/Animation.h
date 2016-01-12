@@ -28,4 +28,9 @@ public:
 	{
 		current_frame = 0.0f;
 	}
+
+	SDL_Rect GetActualFrame()
+	{
+		return frames[(int)current_frame];
+	}
 };

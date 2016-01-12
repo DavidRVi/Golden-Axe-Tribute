@@ -42,7 +42,8 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
 	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PFINAL);
 	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
-	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 40, player_height + 20, this, PATTACK);
+	finalComboCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PFINAL);
+	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 30, player_height + 20, this, PATTACK);
 
 	// Idle frame has to be painted at pivor.x - 15 to fit in
 	idle.x = 135;
@@ -149,9 +150,11 @@ bool ModulePlayer::Start() {
 	App->collisions->AddCollider(chargeAttackCol);
 	App->collisions->AddCollider(idleAttackCol);
 	App->collisions->AddCollider(jumpAttackCol);
+	App->collisions->AddCollider(finalComboCol);
 	chargeAttackCol->setActive(false);
 	idleAttackCol->setActive(false);
 	jumpAttackCol->setActive(false);
+	finalComboCol->setActive(false);
 	return ret;
 }
 
@@ -176,12 +179,13 @@ update_status ModulePlayer::PreUpdate() {
 				hasHit = false;
 				switch (attackState) {
 				case(IDLEATTACK) :
+					idleattack.resetAnimation();
 					attackState = COMBO_2;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
 					break;
 				case(COMBO_2) :
-					//Check the distance from enemy...
+					combo2.resetAnimation();
 					attackState = COMBO_3;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
@@ -195,11 +199,33 @@ update_status ModulePlayer::PreUpdate() {
 				return UPDATE_CONTINUE;
 			}
 			else {		//Animation ended and no hit, back to normal
+				if (combo3.GetActualFrame().x == combo3.frames[2].x)
+					finalComboCol->setActive(true);
 				current_state = IDLE;
 				attackState = NONE;
+				idleattack.resetAnimation();
+				combo2.resetAnimation();
+				combo3.resetAnimation();
 			}
 		}
-		else return UPDATE_CONTINUE;
+		else{
+			if (!hasHit)
+			{
+				if (idleattack.GetActualFrame().x == idleattack.frames[1].x)
+					idleAttackCol->setActive(true);
+				else if (combo2.GetActualFrame().x == combo2.frames[1].x)
+					idleAttackCol->setActive(true);
+				/*
+				if (idleattack.GetActualFrame().x == idleattack.frames[1].x)
+					idleAttackCol->setActive(true);
+				else if (combo2.GetActualFrame().x == combo2.frames[1].x)
+					idleAttackCol->setActive(true);
+				else if (combo3.GetActualFrame().x == combo3.frames[2].x)
+					finalComboCol->setActive(true);*/
+			}
+			
+			return UPDATE_CONTINUE;
+		}
 			
 	}
 	if (jumpAttackWindow->hasPassed() && attackWindow->hasPassed() && attackState != CHARGEATTACK)
@@ -223,6 +249,7 @@ update_status ModulePlayer::PreUpdate() {
 			chargeAttackCol->setActive(false);
 			idleAttackCol->setActive(false);
 			jumpAttackCol->setActive(false);
+			finalComboCol->setActive(false);
 			current_state = IDLE;
 			attackState = NONE;
 			hasHit = false;
@@ -244,7 +271,7 @@ update_status ModulePlayer::PreUpdate() {
 						forward_walking = true;
 						isRunning = true;
 					}
-					else{
+					else {
 						run_timer->resetTimer();
 						current_state = FORWARD;
 						forward_walking = true;
@@ -354,7 +381,7 @@ update_status ModulePlayer::PreUpdate() {
 					attackState = IDLEATTACK;
 					attackWindow->resetTimer();
 					App->audio->PlayFx(attack_fx, 0);
-					idleAttackCol->setActive(true);
+					//idleAttackCol->setActive(true);
 				}
 			}
 		}
@@ -366,21 +393,24 @@ update_status ModulePlayer::PreUpdate() {
 				current_state = ATTACKING;
 				attackWindow->resetTimer();
 				attackAnimation->resetTimer();
+				// Play fx
+				//idleAttackCol->setActive(true);
 				if (attackState == COMBO_2)
 					combo2.resetAnimation();
 				else if (attackState == COMBO_3)
+				{
 					combo3.resetAnimation();
+					idleAttackCol->setActive(false);
+				}
 				else if (attackState == FINISH_AXE)
 				{
 					idleattack.resetAnimation();
 					attackState = IDLEATTACK;
 				}
-					
-				// Play fx
-				idleAttackCol->setActive(true);
 			}
 			else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
 			{
+				idle_timer->resetTimer();
 				current_state = IDLE;
 				attackState = NONE;
 				hasHit = false;
@@ -501,11 +531,13 @@ update_status ModulePlayer::Update() {
 		idleAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - 40);
 		jumpAttackCol->SetPosition(pivot.x + pivot.w + 10, pivot.y - 50 - getJumpHeight(jump_it));
 		chargeAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - player_height);
+		finalComboCol->SetPosition(pivot.x + pivot.w, pivot.y - 40);
 	}
 	else {
 		idleAttackCol->SetPosition(pivot.x - idleAttackCol->GetRect()->w, pivot.y - 40);
 		jumpAttackCol->SetPosition(pivot.x - 50, pivot.y - 50 - getJumpHeight(jump_it));
 		chargeAttackCol->SetPosition(pivot.x - 10, pivot.y - player_height);
+		finalComboCol->SetPosition(pivot.x - finalComboCol->GetRect()->w, pivot.y - 40);
 	}
 
 	if (ret)
@@ -545,6 +577,7 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 			if (attackState != JUMPATTACK && attackState != CHARGEATTACK)
 			{
 				idleAttackCol->setActive(false);
+				finalComboCol->setActive(false);
 				attackWindow->resetTimer();
 				hasHit = true;
 			}
@@ -553,6 +586,8 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 				chargeAttackCol->setActive(false);
 				hasHit = true;
 			}
+			else if (attackState == JUMPATTACK)
+				jumpAttackCol->setActive(false);
 		}
 	}
 	
