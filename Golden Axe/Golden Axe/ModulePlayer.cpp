@@ -26,6 +26,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	attackWindow = new Timer(400);
 	attackAnimation = new Timer(300);
 	chargeAttackTimer = new Timer(400);
+	fallingTimer = new Timer(400);
 	hasHit = false;
 	//Time to wait to change to idle frame when idle
 	idle_timer = new Timer(750);
@@ -116,6 +117,21 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	combo3.frames.push_back({ 120, 330, 70, 60 });
 	combo3.speed = 0.15f;
 
+	falling_down.x = 50;
+	falling_down.y = 560;
+	falling_down.w = 70;
+	falling_down.h = 60;
+
+	lay_down.x = 120;
+	lay_down.y = 560;
+	lay_down.w = 80;
+	lay_down.h = 60;
+
+	recovery.frames.push_back({ 220, 570, 50, 50 });
+	recovery.frames.push_back({ 270, 570, 50, 50 });
+	recovery.speed = 0.09f;
+
+	barHits = 3;
 	lifeBars = 3;
 	lives = 3;
 	magicFlasks = 1;
@@ -136,6 +152,7 @@ ModulePlayer::~ModulePlayer() {
 	RELEASE(jumpAttackWindow);
 	RELEASE(attackAnimation);
 	RELEASE(chargeAttackTimer);
+	RELEASE(fallingTimer);
 }
 
 bool ModulePlayer::Start() {
@@ -144,6 +161,9 @@ bool ModulePlayer::Start() {
 
 	graphics = App->textures->Load("Game/Sprites/dwarf.png");	// Sprite sheet
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
+	hit1_fx = App->audio->LoadFx("Game/fx/hit1.wav");
+	hit2_fx = App->audio->LoadFx("Game/fx/hit2.wav");
+	charge_fx = App->audio->LoadFx("Game/fx/charge.wav");
 
 	App->collisions->AddCollider(pivotCol);
 	App->collisions->AddCollider(hitBoxCol);
@@ -169,7 +189,34 @@ update_status ModulePlayer::PreUpdate() {
 		westLocked = false;
 	}
 	
-	
+	if (current_state == FALLING_DOWN)
+	{
+		if (fallingTimer->hasPassed())
+		{
+			current_state = LAY_DOWN;
+			fallingTimer->resetTimer();
+		}
+		return UPDATE_CONTINUE;
+	}
+	else if (current_state == LAY_DOWN)
+	{
+		if (fallingTimer->hasPassed())
+		{
+			current_state = RECOVERY;
+			fallingTimer->resetTimer();
+		}
+		return UPDATE_CONTINUE;
+	}
+	else if (current_state == RECOVERY)
+	{
+		if (fallingTimer->hasPassed())
+		{
+			hitBoxCol->setActive(true);
+			current_state = IDLE;
+		}
+		return UPDATE_CONTINUE;
+	}
+
 	if (current_state == ATTACKING)
 	{
 		if (attackAnimation->hasPassed())
@@ -179,18 +226,22 @@ update_status ModulePlayer::PreUpdate() {
 				hasHit = false;
 				switch (attackState) {
 				case(IDLEATTACK) :
+					App->audio->PlayFx(hit1_fx, 0);
 					idleattack.resetAnimation();
 					attackState = COMBO_2;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
 					break;
 				case(COMBO_2) :
+					App->audio->PlayFx(hit2_fx, 0);
 					combo2.resetAnimation();
 					attackState = COMBO_3;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
 					break;
 				case(COMBO_3) :
+					//App->audio->PlayFx(hit2_fx, 0);
+					App->audio->PlayFx(charge_fx, 0);
 					attackState = FINISH_AXE;
 					current_state = WAITING_INPUT;
 					attackWindow->resetTimer();
@@ -200,7 +251,11 @@ update_status ModulePlayer::PreUpdate() {
 			}
 			else {		//Animation ended and no hit, back to normal
 				if (combo3.GetActualFrame().x == combo3.frames[2].x)
+				{
 					finalComboCol->setActive(true);
+					App->audio->PlayFx(charge_fx, 0);
+				}
+				else App->audio->PlayFx(attack_fx, 0);
 				current_state = IDLE;
 				attackState = NONE;
 				idleattack.resetAnimation();
@@ -215,13 +270,6 @@ update_status ModulePlayer::PreUpdate() {
 					idleAttackCol->setActive(true);
 				else if (combo2.GetActualFrame().x == combo2.frames[1].x)
 					idleAttackCol->setActive(true);
-				/*
-				if (idleattack.GetActualFrame().x == idleattack.frames[1].x)
-					idleAttackCol->setActive(true);
-				else if (combo2.GetActualFrame().x == combo2.frames[1].x)
-					idleAttackCol->setActive(true);
-				else if (combo3.GetActualFrame().x == combo3.frames[2].x)
-					finalComboCol->setActive(true);*/
 			}
 			
 			return UPDATE_CONTINUE;
@@ -380,7 +428,7 @@ update_status ModulePlayer::PreUpdate() {
 					current_state = ATTACKING;
 					attackState = IDLEATTACK;
 					attackWindow->resetTimer();
-					App->audio->PlayFx(attack_fx, 0);
+					//App->audio->PlayFx(attack_fx, 0);
 					//idleAttackCol->setActive(true);
 				}
 			}
@@ -423,11 +471,12 @@ update_status ModulePlayer::PreUpdate() {
 		{
 			current_state = IDLE;
 			max_jumpheight = 80;		
+			hasHit = false;
 		}
 
 		if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
 		{
-			if (jumpAttackWindow->hasPassed())
+			if (jumpAttackWindow->hasPassed() && !hasHit)
 			{
 				jumpAttackCol->setActive(true);
 				App->audio->PlayFx(attack_fx, 0);
@@ -459,6 +508,18 @@ update_status ModulePlayer::Update() {
 	//Set pivot position
 
 	switch (current_state) {
+	case(FALLING_DOWN):
+		if (forward_walking)
+		{
+			if (!westLocked)
+				pivot.x -= 2;
+		}
+		else{
+			if (!eastLocked)
+				pivot.x += 2;
+		}
+		break;
+
 	case(FORWARD) :
 		if (!eastLocked)
 			pivot.x += 2;
@@ -583,12 +644,41 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 			}
 			else if (attackState == CHARGEATTACK)
 			{
+				App->audio->PlayFx(charge_fx, 0);
 				chargeAttackCol->setActive(false);
 				hasHit = true;
 			}
 			else if (attackState == JUMPATTACK)
+			{
+				hasHit = true;
 				jumpAttackCol->setActive(false);
+				//App->audio->PlayFx(hit1_fx, 0);
+			}
+				
 		}
+	}
+
+	if (b->getType() == EFINAL)
+	{
+		if (inRange(b->GetListener()->GetScreenHeight()))
+		{
+			charge_it = 0;
+			hitBoxCol->setActive(false);
+			barHits--;
+			if (barHits <= 0)
+			{
+				lifeBars--;
+				if (lifeBars <= 0)
+				{
+					lives--;
+					if (lives > 0)
+						lifeBars = 3;
+				}
+			}
+			fallingTimer->resetTimer();
+			current_state = FALLING_DOWN;
+		}
+		
 	}
 	
 	return false;
@@ -814,6 +904,18 @@ bool ModulePlayer::Draw() {
 			break;
 		}
 		break;
+
+	case(FALLING_DOWN):
+		if (forward_walking)
+		{
+			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
+		}
+		else {
+			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
+		}
+		charge_it++;
+		break;
+
 	}
 
 	return ret;
@@ -844,4 +946,8 @@ void ModulePlayer::AddMagicFlask() {
 
 bool ModulePlayer::inRange(int y) const {
 	return ((y - 5) <= pivot.y) && ((y + 5) >= pivot.y);
+}
+
+state ModulePlayer::GetState() const {
+	return current_state;
 }

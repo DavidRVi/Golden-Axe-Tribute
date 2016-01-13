@@ -201,10 +201,14 @@ bool ModuleCameraController::OnCollision(Collider* a, Collider* b)
 		else if (triggerCount >= 50 && !spawnMonsters)
 		{
 			spawnMonsters = true;
-			if (encounterCount == 0)
+			if (encounterCount <= 1)
 			{
 				App->level1->spawnEnemies(160, 180);
 				App->level1->spawnEnemies(160, 200);
+			}
+			else {
+				App->level1->spawnEnemies(185, 190);
+				App->level1->spawnEnemies(185, 220);
 			}
 			
 		}

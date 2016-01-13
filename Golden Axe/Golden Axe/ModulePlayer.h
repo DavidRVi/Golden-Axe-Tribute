@@ -10,7 +10,7 @@
 struct SDL_Texture;
 class Collider;
 
-enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, ATTACKING, WAITING_INPUT };
+enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, FALLING_DOWN, LAY_DOWN, RECOVERY, DYING, ATTACKING, WAITING_INPUT };
 enum AttackState { NONE = 0, JUMPATTACK, IDLEATTACK, CHARGEATTACK, COMBO_2, COMBO_3, FINISH_AXE };
 
 class ModulePlayer : public Module
@@ -38,6 +38,7 @@ public:
 
 public:
 
+	state GetState() const;
 	SDL_Texture* graphics = nullptr;
 	SDL_Rect idle;
 	Animation forward;
@@ -55,8 +56,16 @@ public:
 	SDL_Rect jump_up;
 	SDL_Rect jump_down;
 
+	SDL_Rect falling_down;
+	SDL_Rect lay_down;
+	Animation recovery;
+
+
 	SDL_Rect pivot;
 	unsigned int attack_fx;
+	unsigned int hit1_fx;
+	unsigned int hit2_fx;
+	unsigned int charge_fx;
 
 private:
 	state current_state;
@@ -95,8 +104,11 @@ private:
 	Timer* attackWindow;
 	Timer* jumpAttackWindow;
 	Timer* chargeAttackTimer;		//Indicates the time it takes the charge attack to complete
+	Timer* fallingTimer;
+
 	bool hasHit;
 
+	int barHits;
 	int lifeBars;
 	int lives;
 	int magicFlasks;

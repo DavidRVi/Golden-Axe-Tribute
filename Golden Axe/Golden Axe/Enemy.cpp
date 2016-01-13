@@ -4,19 +4,22 @@
 #include "ModuleCollisions.h"
 #include "ModuleEnemies.h"
 #include "Timer.h"
+#include "ModuleAudio.h"
 #include "ModulePlayer.h"
 
 Enemy::Enemy(int y, int h) {
 
 	y_limit = y;
 	charge_it = 0;
-	falling_timer = new Timer(500);
 	current_state = EIDLE;
 	forward_walking = false;
+	hasHit = false;
 
-	hit_timer = new Timer(700);
-
-	attackTimer = new Timer(400);
+	fallingTimer = new Timer(500);
+	hitTimer = new Timer(700);
+	attackTimer = new Timer(450);
+	chargeTimer = new Timer(300);
+	idleTimer = new Timer(1000);
 
 	pivot.x = App->camController->eastWall->GetRect()->x;
 	pivot.y = h;
@@ -38,11 +41,20 @@ Enemy::Enemy(int y, int h) {
 	lay_down.y = 250;
 	lay_down.w = 100;
 	lay_down.h = 40;
+	
+	dying.frames.push_back(lay_down);
+	dying.frames.push_back({ 0, 0, 0, 0 });
+	dying.speed = 0.2f;
 
 	recovery.x = 430;
 	recovery.y = 230;
 	recovery.w = 70;
 	recovery.h = 70;
+
+	chargeAttack.x = 0;
+	chargeAttack.y = 130;
+	chargeAttack.w = 70;
+	chargeAttack.h = 70;
 
 	idleAttack.frames.push_back({ 90, 100, 70, 110 });
 	idleAttack.frames.push_back({ 170, 100, 70, 110 });
@@ -51,14 +63,22 @@ Enemy::Enemy(int y, int h) {
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, ENEMY);
 	hitBoxCol = new Collider(pivot.x, pivot.y - enemyHeight, pivot.w, enemyHeight, this, EHITBOX);
-	attackCol = new Collider(pivot.x, pivot.y, 30, 50, this, EFINAL);
+	attackCol = new Collider(pivot.x, pivot.y, 50, 50, this, EFINAL);
+	chargeAttackCol = new Collider(pivot.x, pivot.y, 10, enemyHeight, this, EFINAL);
 	App->collisions->AddCollider(pivotCol);
 	App->collisions->AddCollider(hitBoxCol);
 	App->collisions->AddCollider(attackCol);
+	App->collisions->AddCollider(chargeAttackCol);
+
+	chargeAttackCol->setActive(false);
+	attackCol->setActive(false);
 
 	player = App->player;
-
+	fallFx = App->audio->LoadFx("Game/fx/enemy_fall.wav");
+	dyingFx = App->audio->LoadFx("Game/fx/dying.wav");
 	lifePoints = 5;
+	eastLocked = false;
+	westLocked = false;
 
 	debug = false;
 	if (debug)
@@ -69,9 +89,11 @@ Enemy::Enemy(int y, int h) {
 }
 
 Enemy::~Enemy() {
-	RELEASE(falling_timer);
-	RELEASE(hit_timer);
+	RELEASE(fallingTimer);
+	RELEASE(hitTimer);
 	RELEASE(attackTimer);
+	RELEASE(chargeTimer);
+	RELEASE(idleTimer);
 }
 
 bool Enemy::CleanUp() {
@@ -89,47 +111,59 @@ update_status Enemy::PreUpdate() {
 		attackCol->SetDirty(true);
 	}
 	*/
-	attackCol->setActive(false);
+	//attackCol->setActive(false);
 	update_status ret = UPDATE_CONTINUE;
 	switch (current_state) {
 	case(EFALLING_DOWN) :
-		if (falling_timer->hasPassed())
+		if (fallingTimer->hasPassed())
 		{
+			App->audio->PlayFx(fallFx, 0);
 			current_state = ELAY_DOWN;
-			falling_timer->resetTimer();
+			fallingTimer->resetTimer();
 		}
 			
 		break;
 
+	case(EDYING):
+		if (fallingTimer->hasPassed())
+		{
+			pivotCol->SetDirty(true);
+			hitBoxCol->SetDirty(true);
+			attackCol->SetDirty(true);
+			chargeAttackCol->SetDirty(true);
+			App->enemies->DestroyMe(this);
+		}
+		break;
+
 	case(ELAY_DOWN):
-		if (falling_timer->hasPassed())
+		if (fallingTimer->hasPassed())
 		{
 			
 			if (lifePoints <= 0)
 			{
-				//Play Dead fx
-				App->enemies->DestroyMe(this);
-				pivotCol->SetDirty(true);
-				hitBoxCol->SetDirty(true);
-				attackCol->SetDirty(true);
+				App->audio->PlayFx(dyingFx, 0);
+				current_state = EDYING;
+				fallingTimer->resetTimer();
+				//App->enemies->DestroyMe(this);
+				
 			}
 			else {
 				current_state = ERECOVERING;
-				falling_timer->resetTimer();
+				fallingTimer->resetTimer();
 				hitBoxCol->setActive(true);
 			}
 		}
 		break;
 
 	case(ERECOVERING):
-		if (falling_timer->hasPassed())
+		if (fallingTimer->hasPassed())
 		{
 			current_state = EIDLE;
 		}
 		break;
 
 	case(EHIT) :
-		if (hit_timer->hasPassed())
+		if (hitTimer->hasPassed())
 		{
 			current_state = EIDLE;
 		}
@@ -139,41 +173,74 @@ update_status Enemy::PreUpdate() {
 		if (pivot.x > player->pivot.x)
 			forward_walking = false;
 		else forward_walking = true;
-
-		if (inRange(player->GetScreenHeight()))
+		if (player->GetState() == FALLING_DOWN || player->GetState() == RECOVERY || player->GetState() == LAY_DOWN)
+			return UPDATE_CONTINUE;
+		if (idleTimer->hasPassed())
 		{
-			if (!forward_walking)
+			if (inRange(player->GetScreenHeight()))
 			{
-				if (player->pivot.x >= (pivot.x - 2 * attackCol->GetRect()->w) && (player->pivot.x <= pivot.x))
+				if (!forward_walking)
 				{
-					attackTimer->resetTimer();
-					idleAttack.resetAnimation();
-					//attackCol->setActive(true);
-					current_state = EATTACKING;
+					if (player->pivot.x >= (pivot.x - 2 * attackCol->GetRect()->w) && (player->pivot.x <= pivot.x))
+					{
+						attackTimer->resetTimer();
+						idleAttack.resetAnimation();
+						//attackCol->setActive(true);
+						current_state = EATTACKING;
+					}
+					else if (player->pivot.x >= (pivot.x - 150) && (player->pivot.x <= pivot.x - 100))
+					{
+						charge_it = 7;
+						chargeTimer->resetTimer();
+						current_state = ECHARGING;
+					}
+				}
+				else {
+					if (player->pivot.x <= (pivot.x + 2 * attackCol->GetRect()->w) && (player->pivot.x >= pivot.x))
+					{
+						attackTimer->resetTimer();
+						idleAttack.resetAnimation();
+						//attackCol->setActive(true);
+						current_state = EATTACKING;
+					}
+					else if (player->pivot.x <= (pivot.x + 175) && (player->pivot.x >= pivot.x + 125))
+					{
+						charge_it = 7;
+						chargeTimer->resetTimer();
+						current_state = ECHARGING;
+					}
 				}
 			}
-			else {
-				if (player->pivot.x <= (pivot.x + 2 * attackCol->GetRect()->w) && (player->pivot.x >= pivot.x))
-				{
-					attackTimer->resetTimer();
-					idleAttack.resetAnimation();
-					//attackCol->setActive(true);
-					current_state = EATTACKING;
-				}
-			}
-			
 		}
 		break;
 
 	case(EATTACKING) :
 		if (attackTimer->hasPassed())
+		{
 			current_state = EIDLE;
+			attackCol->setActive(false);
+		}
+
+		if (hasHit)
+		{
+			hasHit = false;
+			idleTimer->resetTimer();
+		}
 		else {
-			if (idleAttack.GetActualFrame().x == idleAttack.frames[1].x)
+			if (idleAttack.GetActualFrame().x == idleAttack.frames[2].x)
 				attackCol->setActive(true);
 		}
 		break;
 
+	case(ECHARGING):
+		if (chargeTimer->hasPassed())
+		{
+			chargeAttackCol->setActive(false);
+			current_state = EIDLE;
+			eastLocked = false;
+			westLocked = false;
+		}
+		else chargeAttackCol->setActive(true);
 	}
 	return ret;
 }
@@ -187,13 +254,30 @@ update_status Enemy::Update() {
 			pivot.x -=3;
 		else pivot.x +=3;
 		break;
+	case(ECHARGING):
+		if (forward_walking)
+		{
+			if (!eastLocked)
+				pivot.x += 7;
+		}
+		else {
+			if (!westLocked)
+				pivot.x -= 7;
+		}
 	}
 
 	pivotCol->SetPosition(pivot.x, pivot.y);
 	hitBoxCol->SetPosition(pivot.x, pivot.y - enemyHeight);
 	if (forward_walking)
+	{
 		attackCol->SetPosition(pivot.x + pivot.w, pivot.y - enemyHeight);
-	else attackCol->SetPosition(pivot.x - attackCol->GetRect()->w, pivot.y - enemyHeight);
+		chargeAttackCol->SetPosition(pivot.x + pivot.w, pivot.y - enemyHeight);
+	}
+		
+	else {
+		attackCol->SetPosition(pivot.x - attackCol->GetRect()->w, pivot.y - enemyHeight);
+		chargeAttackCol->SetPosition(pivot.x - chargeAttackCol->GetRect()->w, pivot.y - enemyHeight);
+	}
 
 	return ret;
 }
@@ -234,6 +318,21 @@ bool Enemy::Draw() {
 		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - 60, &recovery);
 		break;
 
+	
+	case(ECHARGING):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 60 - GetFallHeight(charge_it), &chargeAttack);
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - 60 - GetFallHeight(charge_it), &chargeAttack);
+		if (charge_it <= 28)
+			charge_it++;
+		break;
+
+	case(EDYING):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x + 10, pivot.y - lay_down.h + 15, &dying.GetCurrentFrame());
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - lay_down.h + 15, &dying.GetCurrentFrame());
+		break;
+
 	case(EATTACKING) :
 		SDL_Rect frame = idleAttack.GetCurrentFrame();
 		if (forward_walking)
@@ -243,15 +342,15 @@ bool Enemy::Draw() {
 			else if (frame.x == idleAttack.frames[1].x)
 				ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 105, &frame);
 			else if (frame.x == idleAttack.frames[2].x)
-				ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 105, &idleAttack.GetCurrentFrame());
+				ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - 105, &frame);
 		}
 		else {
 			if (frame.x == idleAttack.frames[0].x)
 				ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - 105, &frame);
 			else if (frame.x == idleAttack.frames[1].x)
-				ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x- 20, pivot.y - 105, &frame);
+				ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 20, pivot.y - 105, &frame);
 			else if (frame.x == idleAttack.frames[2].x)
-				ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 50, pivot.y - 105, &idleAttack.GetCurrentFrame());
+				ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 50, pivot.y - 105, &frame);
 		}
 		break;
 
@@ -272,7 +371,7 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 			lifePoints--;
 			charge_it = 5;
 			current_state = EFALLING_DOWN;
-			falling_timer->resetTimer();
+			fallingTimer->resetTimer();
 			hitBoxCol->setActive(false);
 			if (player->pivot.x > pivot.x)
 				forward_walking = true;
@@ -288,18 +387,32 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 			{
 				charge_it = 5;
 				current_state = EFALLING_DOWN;
-				falling_timer->resetTimer();
+				fallingTimer->resetTimer();
 				hitBoxCol->setActive(false);
 			}
 			else{
 				current_state = EHIT;
-				hit_timer->resetTimer();
+				hitTimer->resetTimer();
 			}
 			if (player->pivot.x > pivot.x)
 				forward_walking = true;
 			else forward_walking = false;
 		}
 		
+	}
+	else if (b->getType() == PHITBOX) {
+		if (inRange(player->pivot.y))
+		{
+			hasHit = true;
+			attackCol->setActive(false);
+		}
+		if (current_state == ECHARGING)
+		{
+			chargeAttackCol->setActive(false);
+			if (forward_walking)
+				eastLocked = true;
+			else westLocked = true;
+		}
 	}
 	return false;
 }
