@@ -1,0 +1,65 @@
+﻿Build started 14/01/2016 18:36:05.
+     1>Project "C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Golden Axe\Golden Axe.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Application.cpp Enemy.cpp Log.cpp Main.cpp ModuleAudio.cpp ModuleCameraController.cpp ModuleCollisions.cpp ModuleEnemies.cpp ModuleFadeToBlack.cpp ModuleInput.cpp ModulePlayer.cpp ModuleRender.cpp ModuleSceneIntro.cpp ModuleSceneLevel1.cpp ModuleTextures.cpp ModuleWindow.cpp quicksort.cpp
+         quicksort.cpp
+         ModuleWindow.cpp
+         ModuleTextures.cpp
+         ModuleSceneLevel1.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(12): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(23): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulescenelevel1.cpp(89): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulescenelevel1.cpp(105): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulescenelevel1.cpp(128): warning C4018: '<' : signed/unsigned mismatch
+         ModuleSceneIntro.cpp
+         ModuleRender.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulerender.cpp(151): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulerender.cpp(152): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+         ModulePlayer.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(12): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(23): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\moduleplayer.cpp(762): warning C4244: 'return' : conversion from 'double' to 'int', possible loss of data
+         ModuleInput.cpp
+         ModuleFadeToBlack.cpp
+         ModuleEnemies.cpp
+         ModuleCollisions.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\modulecollisions.cpp(154): warning C4800: 'SDL_bool' : forcing value to bool 'true' or 'false' (performance warning)
+         ModuleCameraController.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(12): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(23): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+         ModuleAudio.cpp
+         Main.cpp
+         Log.cpp
+         Enemy.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(12): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(23): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\enemy.cpp(533): warning C4244: 'return' : conversion from 'double' to 'int', possible loss of data
+         Application.cpp
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(12): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+     1>c:\users\davidrv4\desktop\repo\golden-axe-tribute\golden axe\golden axe\timer.h(23): warning C4244: '=' : conversion from 'Uint32' to 'float', possible loss of data
+         Generating Code...
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Debug\Golden Axe.exe" /INCREMENTAL /NOLOGO /LIBPATH:"D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_mixer\libx86" /LIBPATH:"D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL_image\libx86" /LIBPATH:"D:\Master\Golden Axe Tribute\VS\Golden Axe\Golden Axe\SDL\libx86" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Debug\Golden Axe.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Debug\Golden Axe.lib" /MACHINE:X86 Debug\Application.obj
+         Debug\Enemy.obj
+         Debug\Log.obj
+         Debug\Main.obj
+         Debug\ModuleAudio.obj
+         Debug\ModuleCameraController.obj
+         Debug\ModuleCollisions.obj
+         Debug\ModuleEnemies.obj
+         Debug\ModuleFadeToBlack.obj
+         Debug\ModuleInput.obj
+         Debug\ModulePlayer.obj
+         Debug\ModuleRender.obj
+         Debug\ModuleSceneIntro.obj
+         Debug\ModuleSceneLevel1.obj
+         Debug\ModuleTextures.obj
+         Debug\ModuleWindow.obj
+         Debug\quicksort.obj
+     1>MSVCRTD.lib(cinitexe.obj) : warning LNK4098: defaultlib 'msvcrt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
+         Golden Axe.vcxproj -> C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Debug\Golden Axe.exe
+     1>Done Building Project "C:\Users\davidrv4\Desktop\repo\Golden-Axe-Tribute\Golden Axe\Golden Axe\Golden Axe.vcxproj" (Rebuild target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:04.72
