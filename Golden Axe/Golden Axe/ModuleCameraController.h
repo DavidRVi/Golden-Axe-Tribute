@@ -23,6 +23,7 @@ public:
 
 public:
 	SDL_Texture* interface = nullptr;
+	SDL_Texture* magicGr = nullptr;
 
 	Collider* westWall;
 	Collider* southWall;
@@ -48,6 +49,9 @@ private:
 	SDL_Rect lifeBar;
 	SDL_Rect magicFlask;
 	SDL_Rect gameOver;
+	SDL_Rect lightning;
+	int lightning_it;
+	bool lightning_back;
 
 	int encounterCount;
 

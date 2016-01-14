@@ -11,7 +11,7 @@ class Collider;
 struct SDL_Rect;
 class Timer;
 
-enum Enemy_state { EIDLE = 0, EFORWARD, EBACKWARD, EUP, EDOWN, EUP_FORWARD, EUP_BACKWARD, EDOWN_FORWARD, EDOWN_BACKWARD, EATTACKING, ECHARGING, EFALLING_DOWN, ELAY_DOWN, ERECOVERING, EHIT, EDYING};
+enum Enemy_state { EIDLE = 0, EFORWARD, EBACKWARD, EUP, EWALKING, EATTACKING, ECHARGING, EFALLING_DOWN, ELAY_DOWN, ERECOVERING, EHIT, FROZEN, EDYING};
 class Enemy : public Module {
 private:
 	SDL_Rect pivot;
@@ -33,6 +33,8 @@ private:
 	ModulePlayer* player;
 	bool debug;
 
+	bool leftEnemy;
+
 	unsigned int fallFx;
 	unsigned int dyingFx;
 
@@ -41,7 +43,7 @@ private:
 	bool inRange(int y) const;
 public:
 
-	Enemy(int y, int h);
+	Enemy(int y, int h, bool left = false);
 	~Enemy();
 
 	bool CleanUp();

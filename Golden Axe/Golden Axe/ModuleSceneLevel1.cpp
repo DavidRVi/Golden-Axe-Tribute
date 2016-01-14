@@ -136,10 +136,10 @@ void ModuleSceneLevel1::ChangeState(LevelState state) {
 	current_state = state;
 }
 
-void ModuleSceneLevel1::spawnEnemies(int y, int h) {
+void ModuleSceneLevel1::spawnEnemies(int y, int h, bool left) {
 	//current_state = BATTLE;
 	activeEnemies++;
-	gameElements.push_back(App->enemies->CreateEnemy(y, h));
+	gameElements.push_back(App->enemies->CreateEnemy(y, h, left));
 }
 
 bool ModuleSceneLevel1::DeleteEnemy(const Module* enemy) {

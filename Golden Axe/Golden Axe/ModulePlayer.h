@@ -10,7 +10,7 @@
 struct SDL_Texture;
 class Collider;
 
-enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, FALLING_DOWN, LAY_DOWN, RECOVERY, DYING, ATTACKING, WAITING_INPUT };
+enum state { IDLE=0, FORWARD, BACKWARD, UP, DOWN, UP_FORWARD, UP_BACKWARD, DOWN_FORWARD, DOWN_BACKWARD, RUN_FORWARD, RUN_BACKWARD, JUMPING, FALLING_DOWN, LAY_DOWN, RECOVERY, DYING, ATTACKING, MAGIC, WAITING_INPUT };
 enum AttackState { NONE = 0, JUMPATTACK, IDLEATTACK, CHARGEATTACK, COMBO_2, COMBO_3, FINISH_AXE };
 
 class ModulePlayer : public Module
@@ -27,6 +27,7 @@ public:
 	bool OnCollision(Collider* a, Collider* b);
 
 	int GetScreenHeight() const;
+	int GetScreenWidth() const;
 
 	bool Draw();
 
@@ -40,11 +41,12 @@ public:
 
 	state GetState() const;
 	SDL_Texture* graphics = nullptr;
+
 	SDL_Rect idle;
 	Animation forward;
 	Animation up;
 	Animation run;
-
+	Animation magicAnimation;
 	SDL_Rect jumpattack;
 	Animation idleattack;
 	Animation combo2;
@@ -108,6 +110,7 @@ private:
 	Timer* jumpAttackWindow;
 	Timer* chargeAttackTimer;		//Indicates the time it takes the charge attack to complete
 	Timer* fallingTimer;
+	Timer* magicTimer;
 
 	bool hasHit;
 

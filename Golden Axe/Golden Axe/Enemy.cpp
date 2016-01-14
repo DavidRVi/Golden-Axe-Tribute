@@ -7,13 +7,14 @@
 #include "ModuleAudio.h"
 #include "ModulePlayer.h"
 
-Enemy::Enemy(int y, int h) {
+Enemy::Enemy(int y, int h, bool left) {
 
 	y_limit = y;
 	charge_it = 0;
 	current_state = EIDLE;
 	forward_walking = false;
 	hasHit = false;
+	leftEnemy = left;
 
 	fallingTimer = new Timer(500);
 	hitTimer = new Timer(700);
@@ -108,6 +109,19 @@ bool Enemy::CleanUp() {
 
 update_status Enemy::PreUpdate() {
 
+	if (player->GetState() == MAGIC)
+	{
+		current_state = FROZEN;
+	}
+	else {
+		if (current_state == FROZEN)
+		{
+			current_state = EFALLING_DOWN;
+			fallingTimer->resetTimer();
+			lifePoints = 0;
+		}
+
+	}
 	/*
 	if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN)
 	{
@@ -119,6 +133,7 @@ update_status Enemy::PreUpdate() {
 	*/
 	attackCol->setActive(false);
 	update_status ret = UPDATE_CONTINUE;
+
 	switch (current_state) {
 	case(EFALLING_DOWN) :
 		if (fallingTimer->hasPassed())
@@ -176,7 +191,7 @@ update_status Enemy::PreUpdate() {
 		break;
 
 	case(EIDLE):
-		if (pivot.x > player->pivot.x)
+		if ((pivot.x + pivot.w/2) > player->GetScreenWidth())
 			forward_walking = false;
 		else forward_walking = true;
 		if (player->GetState() == FALLING_DOWN || player->GetState() == RECOVERY || player->GetState() == LAY_DOWN)
@@ -187,38 +202,52 @@ update_status Enemy::PreUpdate() {
 			{
 				if (!forward_walking)
 				{
-					if (player->pivot.x >= (pivot.x -  attackCol->GetRect()->w - 10) && (player->pivot.x <= pivot.x))
+					if ((player->GetScreenWidth() + 30) >= (pivot.x - attackCol->GetRect()->w + 10) && ((player->GetScreenWidth() + 30) <= pivot.x))
 					{
-						attackTimer->resetTimer();
-						idleAttack.resetAnimation();
-						//attackCol->setActive(true);
-						current_state = EATTACKING;
+						if (player->GetState() != ATTACKING || player->GetState() != WAITING_INPUT)
+						{
+							attackTimer->resetTimer();
+							idleAttack.resetAnimation();
+							//attackCol->setActive(true);
+							current_state = EATTACKING;
+						}
 					}
-					else if (player->pivot.x >= (pivot.x - 150) && (player->pivot.x <= pivot.x - 100))
+					else if ((player->GetScreenWidth()+ 30) >= (pivot.x - 150) && (player->GetScreenWidth() <= pivot.x - 100))
 					{
 						charge_it = 7;
 						chargeTimer->resetTimer();
 						current_state = ECHARGING;
 						chargeAttackCol->setActive(true);
+					}
+					else{
+						current_state = EWALKING;
 					}
 				}
 				else {
-					if (player->pivot.x <= (pivot.x + attackCol->GetRect()->w + 10) && (player->pivot.x >= pivot.x))
+					if (player->GetScreenWidth()<= (pivot.x + pivot.w + attackCol->GetRect()->w - 10) && (player->GetScreenWidth() >= pivot.x))
 					{
-						attackTimer->resetTimer();
-						idleAttack.resetAnimation();
-						//attackCol->setActive(true);
-						current_state = EATTACKING;
+						if (player->GetState() != ATTACKING || player->GetState() != WAITING_INPUT)
+						{
+							attackTimer->resetTimer();
+							idleAttack.resetAnimation();
+							//attackCol->setActive(true);
+							current_state = EATTACKING;
+						}
+						
 					}
-					else if (player->pivot.x <= (pivot.x + 175) && (player->pivot.x >= pivot.x + 125))
+					else if (player->GetScreenWidth() <= (pivot.x + 175) && (player->GetScreenWidth() >= pivot.x + 125))
 					{
 						charge_it = 7;
 						chargeTimer->resetTimer();
 						chargeAttackCol->setActive(true);
 						current_state = ECHARGING;
 					}
+					else {
+						current_state = EWALKING;
+					}
 				}
 			}
+			else current_state = EWALKING;
 		}
 		break;
 
@@ -247,8 +276,19 @@ update_status Enemy::PreUpdate() {
 			current_state = EIDLE;
 			eastLocked = false;
 			westLocked = false;
+			if (hasHit)
+			{
+				hasHit = false;
+				idleTimer->resetTimer();
+			}
 		}
-		//else chargeAttackCol->setActive(true);
+		break;
+
+	case(EWALKING) :
+		if ((pivot.x + pivot.w / 2) > player->pivot.x)
+			forward_walking = false;
+		else forward_walking = true;
+
 		break;
 
 	}
@@ -274,7 +314,66 @@ update_status Enemy::Update() {
 			if (!westLocked)
 				pivot.x -= 9;
 		}
+
+		break;
+
+	case(EWALKING) :
+		if (leftEnemy)
+		{
+			if (player->GetState() == ATTACKING || player->GetState() == WAITING_INPUT || player->GetState() == JUMPING)
+			{
+				pivot.x--;
+			}
+			else {
+				if ((pivot.x + pivot.w + attackCol->GetRect()->w - 10) < player->GetScreenWidth())
+				{
+					pivot.x++;
+				}
+				else{
+					if ((pivot.x + pivot.w) >= player->GetScreenWidth())
+						pivot.x--;
+					if (!inRange(player->GetScreenHeight()))
+					{
+						if (pivot.y > player->GetScreenHeight())
+							pivot.y--;
+						else pivot.y++;
+					}
+					else current_state = EIDLE;
+				}
+			}
+		}
+		else {
+			if (player->GetState() == ATTACKING || player->GetState() == WAITING_INPUT || player->GetState() == JUMPING)
+			{
+				pivot.x++;
+			}
+			else {
+				if ((pivot.x + 10) < player->GetScreenWidth() + 30)
+				{
+					pivot.x++;
+					if (!inRange(player->GetScreenHeight()))
+					{
+						if (pivot.y > player->GetScreenHeight())
+							pivot.y--;
+						else pivot.y++;
+					}
+				}
+				else{
+					if ((pivot.x) >= player->GetScreenWidth() + 30)
+						pivot.x--;
+					if (!inRange(player->GetScreenHeight()))
+					{
+						if (pivot.y > player->GetScreenHeight())
+							pivot.y--;
+						else pivot.y++;
+					}
+					else current_state = EIDLE;
+				}
+			}
+
 	}
+	break;
+}
 
 	pivotCol->SetPosition(pivot.x, pivot.y);
 	hitBoxCol->SetPosition(pivot.x, pivot.y - enemyHeight);
@@ -341,6 +440,18 @@ bool Enemy::Draw() {
 		if (forward_walking)
 			ret = App->renderer->Blit(App->enemies->graphics, pivot.x + 10, pivot.y - lay_down.h + 15, &dying.GetCurrentFrame());
 		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x - 10, pivot.y - lay_down.h + 15, &dying.GetCurrentFrame());
+		break;
+
+	case(EWALKING):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - enemyHeight + 10, &forward.GetCurrentFrame());
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - enemyHeight + 10, &forward.GetCurrentFrame());
+		break;
+
+	case(FROZEN):
+		if (forward_walking)
+			ret = App->renderer->Blit(App->enemies->graphics, pivot.x, pivot.y - enemyHeight + 10, &forward.frames[1]);
+		else ret = App->renderer->BlitFlipH(App->enemies->graphics, pivot.x, pivot.y - enemyHeight + 10, &forward.frames[1]);
 		break;
 
 	case(EATTACKING) :
@@ -411,17 +522,17 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 		
 	}
 	else if (b->getType() == PHITBOX) {
-		if (inRange(player->pivot.y))
+		if (inRange(player->GetScreenHeight()))
 		{
 			hasHit = true;
 			attackCol->setActive(false);
-		}
-		if (current_state == ECHARGING)
-		{
-			chargeAttackCol->setActive(false);
-			if (forward_walking)
-				eastLocked = true;
-			else westLocked = true;
+			if (current_state == ECHARGING)
+			{
+				chargeAttackCol->setActive(false);
+				if (forward_walking)
+					eastLocked = true;
+				else westLocked = true;
+			}
 		}
 	}
 	return false;

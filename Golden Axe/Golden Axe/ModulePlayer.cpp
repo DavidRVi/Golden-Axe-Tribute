@@ -32,6 +32,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	idleTimer = new Timer(750);
 
 	runTimer = new Timer(300);
+	magicTimer = new Timer(4000);
 	isRunning = false;
 
 	pivot.x = 60;
@@ -92,6 +93,10 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	idleattack.frames.push_back({ 150, 250, 70, 50 });
 	idleattack.speed = 0.09f;
 
+	magicAnimation.frames.push_back({ 380, 0, 50, 70 });
+	magicAnimation.frames.push_back({ 430, 0, 50, 70 });
+	magicAnimation.speed = 0.01f;
+
 	waitingCombo2.x = 150;
 	waitingCombo2.y = 250;
 	waitingCombo2.w = 70;
@@ -147,6 +152,7 @@ ModulePlayer::~ModulePlayer() {
 	RELEASE(attackAnimation);
 	RELEASE(chargeAttackTimer);
 	RELEASE(fallingTimer);
+	RELEASE(magicTimer);
 }
 
 bool ModulePlayer::Start() {
@@ -162,6 +168,7 @@ bool ModulePlayer::Start() {
 	forward_walking = true;
 
 	graphics = App->textures->Load("Game/Sprites/dwarf.png");	// Sprite sheet
+
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
 	hit1_fx = App->audio->LoadFx("Game/fx/hit1.wav");
 	hit2_fx = App->audio->LoadFx("Game/fx/hit2.wav");
@@ -193,6 +200,9 @@ bool ModulePlayer::Start() {
 
 update_status ModulePlayer::PreUpdate() {
 	
+	if (current_state == MAGIC)
+		return UPDATE_CONTINUE;
+
 	if (chargeAttackTimer->hasPassed())
 	{
 		southLocked = false;
@@ -447,6 +457,18 @@ update_status ModulePlayer::PreUpdate() {
 				current_state = UP;
 				idleTimer->resetTimer();
 			}
+			else if (App->input->GetKey(SDL_SCANCODE_A) == KEY_DOWN)
+			{
+				if (magicFlasks > 0)
+				{
+					magicFlasks = 0;
+					magicAnimation.resetAnimation();
+					hitBoxCol->setActive(false);
+					magicTimer->resetTimer();
+					current_state = MAGIC;
+					return UPDATE_CONTINUE;
+				}
+			}
 			if (App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
 			{
 				if (isRunning)
@@ -620,6 +642,13 @@ update_status ModulePlayer::Update() {
 			}
 		}
 		break;
+	case(MAGIC):
+		if (magicTimer->hasPassed())
+		{
+			hitBoxCol->setActive(true);
+			current_state = IDLE;
+		}
+		break;
 	}
 
 	if (current_state == JUMPING)
@@ -655,6 +684,7 @@ bool ModulePlayer::CleanUp() {
 	LOG("Unloading player.");
 
 	App->textures->Unload(graphics);
+
 	return true;
 }
 
@@ -743,6 +773,10 @@ bool ModulePlayer::Draw() {
 	//Draw Animations
 	switch (current_state)
 	{
+	case(MAGIC) :
+		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &magicAnimation.GetCurrentFrame());
+		break;
+
 	case(IDLE) :
 		if (repaint_frame)
 		{
@@ -995,6 +1029,10 @@ bool ModulePlayer::Draw() {
 
 int ModulePlayer::GetScreenHeight() const {
 	return pivot.y;
+}
+
+int ModulePlayer::GetScreenWidth() const {
+	return pivot.x;
 }
 
 int ModulePlayer::GetLifeBars() const {

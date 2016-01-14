@@ -55,10 +55,18 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 	magicFlask.w = 5;
 	magicFlask.h = 10;
 
+	lightning.x = 0;
+	lightning.y = 0;
+	lightning.w = 160;
+	lightning.h = 202;
+
 	gameOver.x = 0;
 	gameOver.y = 165;
 	gameOver.w = 140;
 	gameOver.h = 35;
+
+	lightning_it = 0;
+	lightning_back = false;
 
 	encounterCount = 0;
 
@@ -71,6 +79,7 @@ ModuleCameraController::~ModuleCameraController() {
 
 bool ModuleCameraController::Start() {
 	interface = App->textures->Load("Game/Sprites/interface.png");
+	magicGr = App->textures->Load("Game/Sprites/magic.png");
 	go_fx = App->audio->LoadFx("Game/fx/go.wav");
 	show_go = false;
 
@@ -145,35 +154,54 @@ update_status ModuleCameraController::Update() {
 	//--------------- INTERFACE ------------------
 	if (App->level1->getLevelState() != GAME_OVER)
 	{
-		int magicFlasks = App->player->GetMagicFlasks();
-		if (magicFlasks > 0)
+		if (App->player->GetState() == MAGIC)
 		{
-			App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
-			//Draw magicFlasks depending on number
-			for (int i = 0; i < magicFlasks; i++)
-				App->renderer->Blit(interface, westWall->GetRect()->x + 88 + (i*(magicFlask.w + 3)), 19, &magicFlask);
+
+			if (!lightning_back)
+			{
+				App->renderer->Blit(magicGr, westWall->GetRect()->x - lightning.w + lightning_it, 0, &lightning);
+				lightning_it+=3;
+			}
+			else {
+				App->renderer->BlitFlipH(magicGr, westWall->GetRect()->x - lightning.w + lightning_it, 0, &lightning);
+				lightning_it-=3;
+			}
+
+			if (lightning_it > eastWall->GetRect()->x + 30)
+				lightning_back = true;
 		}
+		else {
+			lightning_it = 0;
+			int magicFlasks = App->player->GetMagicFlasks();
+			if (magicFlasks > 0)
+			{
+				App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
+				for (int i = 0; i < magicFlasks; i++)
+					App->renderer->Blit(interface, westWall->GetRect()->x + 88 + (i*(magicFlask.w + 3)), 19, &magicFlask);
+			}
 
-		App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
-		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 30, 215, &charPortrait);
+			App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
+			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 30, 215, &charPortrait);
 
-		switch (App->player->GetLives())
-		{
-		case(3) :
-			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_3);
-			break;
-		case(2) :
-			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_2);
-			break;
-		case(1) :
-			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_1);
-			break;
+			switch (App->player->GetLives())
+			{
+			case(3) :
+				App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_3);
+				break;
+			case(2) :
+				App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_2);
+				break;
+			case(1) :
+				App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_1);
+				break;
+			}
+
+			int lifeBars = App->player->GetLifeBars();
+
+			for (int i = 0; i < lifeBars; i++)
+				App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 60 - (i*lifeBar.w), 215, &lifeBar);
 		}
-
-		int lifeBars = App->player->GetLifeBars();
-
-		for (int i = 0; i < lifeBars; i++)
-			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 60 - (i*lifeBar.w), 215, &lifeBar);
+		
 	}
 	else {
 		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - gameOver.w / 2, SCREEN_HEIGHT / 2 - gameOver.h / 2, &gameOver);
@@ -193,6 +221,7 @@ update_status ModuleCameraController::PostUpdate() {
 bool ModuleCameraController::CleanUp() {
 	//App->renderer->ResetCamera();
 	App->textures->Unload(interface);
+	App->textures->Unload(magicGr);
 	return true;
 }
 
@@ -218,7 +247,7 @@ bool ModuleCameraController::OnCollision(Collider* a, Collider* b)
 			spawnMonsters = true;
 			if (encounterCount <= 1)
 			{
-				App->level1->spawnEnemies(160, 180);
+				App->level1->spawnEnemies(160, 180, true);
 				App->level1->spawnEnemies(160, 200);
 			}
 			else {
