@@ -134,14 +134,6 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	dying.frames.push_back({ 120, 560, 80, 60 });
 	dying.frames.push_back({ 0, 0, 0, 0 });
 	dying.speed = 0.09f;
-
-	debug = false;
-	if (debug)
-	{
-		RELEASE(fallingTimer);
-		fallingTimer = new Timer(5000);
-		recovery.speed = 0.01f;
-	}
 }
 
 ModulePlayer::~ModulePlayer() { 
@@ -175,6 +167,7 @@ bool ModulePlayer::Start() {
 	charge_fx = App->audio->LoadFx("Game/fx/charge.wav");
 	dying_fx = App->audio->LoadFx("Game/fx/dying.wav");
 	fall_fx = App->audio->LoadFx("Game/fx/enemy_fall.wav");
+	lightning_fx = App->audio->LoadFx("Game/fx/lightning.wav");
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
 	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
@@ -200,6 +193,11 @@ bool ModulePlayer::Start() {
 
 update_status ModulePlayer::PreUpdate() {
 	
+	if (App->level1->getLevelState() == WIN)
+	{
+		current_state = IDLE;
+		return UPDATE_CONTINUE;
+	}
 	if (current_state == MAGIC)
 		return UPDATE_CONTINUE;
 
@@ -466,6 +464,7 @@ update_status ModulePlayer::PreUpdate() {
 					hitBoxCol->setActive(false);
 					magicTimer->resetTimer();
 					current_state = MAGIC;
+					App->audio->PlayFx(lightning_fx, 0);
 					return UPDATE_CONTINUE;
 				}
 			}
@@ -731,6 +730,7 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 	{
 		if (inRange(b->GetListener()->GetScreenHeight()))
 		{
+			isRunning = false;
 			App->audio->PlayFx(charge_fx, 0);
 			if (b->GetListener()->GetScreenWidth() > pivot.x)
 				forward_walking = true;
@@ -763,18 +763,13 @@ int ModulePlayer::getChargeHeight(int i) const{
 }
 
 bool ModulePlayer::Draw() {
-	if (debug)
-	{
-		forward_walking = true;
-		current_state = DYING;
-	}
 
 	bool ret = true;
 	//Draw Animations
 	switch (current_state)
 	{
 	case(MAGIC) :
-		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height, &magicAnimation.GetCurrentFrame());
+		ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - 10, &magicAnimation.GetCurrentFrame());
 		break;
 
 	case(IDLE) :

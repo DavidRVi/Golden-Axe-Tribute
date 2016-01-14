@@ -18,9 +18,10 @@ public:
 	bool CleanUp();
 
 	void ChangeState(LevelState state);
-	void spawnEnemies(int y, int h, bool left = false);			//Always spawn 2 enemies right of the screen
+	void spawnEnemy(int h, bool left = false);
 	bool DeleteEnemy(const Module* enemy);	
 	void TriggerGameOver();
+	void TriggerWin();
 
 	LevelState getLevelState() const;
 

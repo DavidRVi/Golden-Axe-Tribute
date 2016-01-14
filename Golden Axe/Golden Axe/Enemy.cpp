@@ -7,9 +7,8 @@
 #include "ModuleAudio.h"
 #include "ModulePlayer.h"
 
-Enemy::Enemy(int y, int h, bool left) {
+Enemy::Enemy(int h, bool left) {
 
-	y_limit = y;
 	charge_it = 0;
 	current_state = EIDLE;
 	forward_walking = false;
@@ -22,7 +21,7 @@ Enemy::Enemy(int y, int h, bool left) {
 	chargeTimer = new Timer(300);
 	idleTimer = new Timer(1400);
 
-	pivot.x = App->camController->eastWall->GetRect()->x;
+	pivot.x = App->camController->eastWall->GetRect()->x + 35;
 	pivot.y = h;
 	pivot.w = 40;
 	pivot.h = 10;
@@ -86,13 +85,6 @@ Enemy::Enemy(int y, int h, bool left) {
 	lifePoints = 5;
 	eastLocked = false;
 	westLocked = false;
-
-	debug = false;
-	if (debug)
-	{
-		RELEASE(attackTimer);
-		attackTimer = new Timer(5000);
-	}
 }
 
 Enemy::~Enemy() {
@@ -194,6 +186,8 @@ update_status Enemy::PreUpdate() {
 		if ((pivot.x + pivot.w/2) > player->GetScreenWidth())
 			forward_walking = false;
 		else forward_walking = true;
+		westLocked = false;
+		eastLocked = false;
 		if (player->GetState() == FALLING_DOWN || player->GetState() == RECOVERY || player->GetState() == LAY_DOWN)
 			return UPDATE_CONTINUE;
 		if (idleTimer->hasPassed())
@@ -318,22 +312,22 @@ update_status Enemy::Update() {
 		break;
 
 	case(EWALKING) :
-		if (leftEnemy)
+		if (leftEnemy)	//need to be at player's left side
 		{
 			if (player->GetState() == ATTACKING || player->GetState() == WAITING_INPUT || player->GetState() == JUMPING)
 			{
 				pivot.x--;
 			}
-			else {
+			else {	//in player's left side, go to attack range
 				if ((pivot.x + pivot.w + attackCol->GetRect()->w - 10) < player->GetScreenWidth())
 				{
 					pivot.x++;
 				}
-				else{
+				else{	//go to player's left side
 					if ((pivot.x + pivot.w) >= player->GetScreenWidth())
 						pivot.x--;
 					if (!inRange(player->GetScreenHeight()))
-					{
+					{	//get in attack range
 						if (pivot.y > player->GetScreenHeight())
 							pivot.y--;
 						else pivot.y++;
@@ -342,27 +336,21 @@ update_status Enemy::Update() {
 				}
 			}
 		}
-		else {
+		else {	//need to be at player's right side
 			if (player->GetState() == ATTACKING || player->GetState() == WAITING_INPUT || player->GetState() == JUMPING)
 			{
 				pivot.x++;
 			}
-			else {
+			else {	//go to player's right side
 				if ((pivot.x + 10) < player->GetScreenWidth() + 30)
 				{
 					pivot.x++;
-					if (!inRange(player->GetScreenHeight()))
-					{
-						if (pivot.y > player->GetScreenHeight())
-							pivot.y--;
-						else pivot.y++;
-					}
 				}
-				else{
+				else{	//in player's right side, need to get in attack range
 					if ((pivot.x) >= player->GetScreenWidth() + 30)
 						pivot.x--;
 					if (!inRange(player->GetScreenHeight()))
-					{
+					{	//get in attack range
 						if (pivot.y > player->GetScreenHeight())
 							pivot.y--;
 						else pivot.y++;
@@ -392,8 +380,6 @@ update_status Enemy::Update() {
 }
 
 bool Enemy::Draw() {
-	if (debug)
-		idleAttack.speed = 0.01f;
 	bool ret = true;
 	switch (current_state){
 	case(EIDLE):
@@ -494,6 +480,8 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 			current_state = EFALLING_DOWN;
 			fallingTimer->resetTimer();
 			hitBoxCol->setActive(false);
+			attackCol->setActive(false);
+			chargeAttackCol->setActive(false);
 			if (player->pivot.x > pivot.x)
 				forward_walking = true;
 			else forward_walking = false;
@@ -518,6 +506,8 @@ bool Enemy::OnCollision(Collider* a, Collider* b) {
 			if (player->pivot.x > pivot.x)
 				forward_walking = true;
 			else forward_walking = false;
+			attackCol->setActive(false);
+			chargeAttackCol->setActive(false);
 		}
 		
 	}

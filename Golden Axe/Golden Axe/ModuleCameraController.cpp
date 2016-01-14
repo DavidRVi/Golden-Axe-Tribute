@@ -65,11 +65,6 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 	gameOver.w = 140;
 	gameOver.h = 35;
 
-	lightning_it = 0;
-	lightning_back = false;
-
-	encounterCount = 0;
-
 	go_timer = new Timer(1000);
 }
 
@@ -94,32 +89,18 @@ bool ModuleCameraController::Start() {
 	cameraTrigger = new Collider(westWall->GetRect()->x + (SCREEN_WIDTH / 2) + 20, 0, (SCREEN_WIDTH / 2) - 20 , 240, this, TRIGGER);
 	App->collisions->AddCollider(cameraTrigger);
 
+	encounterCount = 0;
 	triggerCount = 0;
+
+	lightning_it = 0;
+	lightning_back = false;
+
 	spawnMonsters = false;
 	
 	return true;
 }
 
 update_status ModuleCameraController::PreUpdate() {
-
-	/* //debug
-	
-	int speed = 3;
-	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN || App->input->GetKey(SDL_SCANCODE_L) == KEY_REPEAT)
-	{
-		App->renderer->camera.x -= speed;
-		westWall->SetPosition(westWall->GetRect()->x + 1, 0);
-		eastWall->SetPosition(eastWall->GetRect()->x + 1, 0);
-		//cameraTrigger->SetPosition(cameraTrigger->GetRect()->x + 1, 0);
-	}
-	else if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN || App->input->GetKey(SDL_SCANCODE_J) == KEY_REPEAT)
-	{
-		App->renderer->camera.x += speed;
-		westWall->SetPosition(westWall->GetRect()->x - 1, 0);
-		eastWall->SetPosition(eastWall->GetRect()->x - 1, 0);
-		//cameraTrigger->SetPosition(cameraTrigger->GetRect()->x - 1, 0);
-	}
-	*/
 	return UPDATE_CONTINUE;
 }
 
@@ -132,7 +113,7 @@ update_status ModuleCameraController::Update() {
 			if (encounterCount <= 5)
 			{
 				App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH - go.frames[0].w), 40, &go.GetCurrentFrame());
-				
+
 			}
 		}
 		else {
@@ -142,13 +123,16 @@ update_status ModuleCameraController::Update() {
 				App->collisions->AddCollider(cameraTrigger);
 				triggerCount = 0;
 				show_go = false;
-				//go_timer->resetTimer();
 			}
 			else {
+				App->level1->TriggerWin();
 				//LEVEL COMPLETE
 			}
-			
+
 		}
+	}
+	else if(encounterCount > 5) {
+		App->level1->TriggerWin();
 	}
 
 	//--------------- INTERFACE ------------------
@@ -160,15 +144,17 @@ update_status ModuleCameraController::Update() {
 			if (!lightning_back)
 			{
 				App->renderer->Blit(magicGr, westWall->GetRect()->x - lightning.w + lightning_it, 0, &lightning);
-				lightning_it+=3;
+				lightning_it+=SCREEN_SIZE;
 			}
 			else {
 				App->renderer->BlitFlipH(magicGr, westWall->GetRect()->x - lightning.w + lightning_it, 0, &lightning);
-				lightning_it-=3;
+				lightning_it-=SCREEN_SIZE;
 			}
 
-			if (lightning_it > eastWall->GetRect()->x + 30)
+			if (lightning_it >= SCREEN_WIDTH)
 				lightning_back = true;
+			else if (lightning_it <= (0 - lightning.w))
+				lightning_back = false;
 		}
 		else {
 			lightning_it = 0;
@@ -229,7 +215,7 @@ bool ModuleCameraController::OnCollision(Collider* a, Collider* b)
 {
 	if (a->getType() == TRIGGER)
 	{
-		App->renderer->camera.x -= 3;
+		App->renderer->camera.x -= (SCREEN_SIZE);
 		westWall->SetPosition(westWall->GetRect()->x + 1, 0);
 		eastWall->SetPosition(eastWall->GetRect()->x + 1, 0);
 		cameraTrigger->SetPosition(cameraTrigger->GetRect()->x + 1, 0);
@@ -247,19 +233,29 @@ bool ModuleCameraController::OnCollision(Collider* a, Collider* b)
 			spawnMonsters = true;
 			if (encounterCount <= 1)
 			{
-				App->level1->spawnEnemies(160, 180, true);
-				App->level1->spawnEnemies(160, 200);
+				//App->level1->spawnEnemies(160, 180, true);
+				App->level1->spawnEnemy(200);
 			}
-			else {
-				App->level1->spawnEnemies(185, 190);
-				App->level1->spawnEnemies(185, 220);
+			else if (encounterCount == 2) {
+				App->level1->spawnEnemy(190, true);
+				App->level1->spawnEnemy(220);
 			}
 			
+			else if (encounterCount >= 3) {
+				if (encounterCount < 5)
+					App->level1->spawnEnemy(220, true);
+				else {
+					spawnMonsters = false;
+					if (triggerCount == 240)
+					{
+						App->level1->spawnEnemy(150, true);
+						App->level1->spawnEnemy(220);
+					}
+				}
+			}
 		}
 
 	}
-
-	
 	return false;
 }
 

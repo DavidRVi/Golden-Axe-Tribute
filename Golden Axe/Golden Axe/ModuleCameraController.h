@@ -31,6 +31,7 @@ public:
 
 private:
 	Collider* cameraTrigger;
+	Collider* magicFlaskCol;
 
 	int triggerCount;
 	bool spawnMonsters;

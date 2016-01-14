@@ -68,9 +68,6 @@ bool ModuleSceneLevel1::CleanUp() {
 	App->textures->Unload(background);
 	App->player->Disable();
 	App->enemies->Disable();
-	/*
-	for (vector<Module*>::iterator it = gameElements.begin(); it != gameElements.end();)
-		*it = nullptr;*/
 
 	gameElements.clear();
 
@@ -126,6 +123,26 @@ update_status ModuleSceneLevel1::Update() {
 			App->fade->FadeToBlack((Module*)App->intro, this);
 		}
 		break;
+
+	case(WIN):
+		for (int i = 0; i < gameElements.size(); ++i)
+			gameElements[i]->Draw();
+
+		if (!playMusic)
+		{
+			playMusic = true;
+			App->audio->PlayMusic("Game/Music/win.ogg", 0.0f);
+		}
+		if (App->input->GetKey(SDL_SCANCODE_RETURN) == KEY_DOWN)
+		{
+
+			App->camController->Disable();
+			App->enemies->Disable();
+			App->player->Disable();
+			App->collisions->Disable();
+			App->fade->FadeToBlack((Module*)App->intro, this);
+		}
+		break;
 	}
 	if (ret)
 		return UPDATE_CONTINUE;
@@ -136,11 +153,12 @@ void ModuleSceneLevel1::ChangeState(LevelState state) {
 	current_state = state;
 }
 
-void ModuleSceneLevel1::spawnEnemies(int y, int h, bool left) {
+void ModuleSceneLevel1::spawnEnemy(int h, bool left) {
 	//current_state = BATTLE;
 	activeEnemies++;
-	gameElements.push_back(App->enemies->CreateEnemy(y, h, left));
+	gameElements.push_back(App->enemies->CreateEnemy(h, left));
 }
+
 
 bool ModuleSceneLevel1::DeleteEnemy(const Module* enemy) {
 	bool hasDeleted = false;
@@ -161,6 +179,10 @@ bool ModuleSceneLevel1::DeleteEnemy(const Module* enemy) {
 void ModuleSceneLevel1::TriggerGameOver() {
 	current_state = GAME_OVER;
 	
+}
+
+void ModuleSceneLevel1::TriggerWin() {
+	current_state = WIN;
 }
 
 LevelState ModuleSceneLevel1::getLevelState() const {

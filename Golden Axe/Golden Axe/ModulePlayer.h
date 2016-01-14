@@ -71,6 +71,7 @@ public:
 	unsigned int charge_fx;
 	unsigned int dying_fx;
 	unsigned int fall_fx;
+	unsigned int lightning_fx;
 
 private:
 	state current_state;
@@ -123,9 +124,6 @@ private:
 	int getChargeHeight(int i) const;
 
 	bool inRange(int y) const;		//Determines whether the enemy is in attack range or not
-
-
-	bool debug;
 };
 
 #endif

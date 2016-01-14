@@ -19,7 +19,6 @@ private:
 	Enemy_state current_state;
 	bool forward_walking;
 	int lifePoints;
-	int y_limit;
 	Timer* fallingTimer;
 	Timer* hitTimer;
 	Timer* attackTimer;
@@ -30,8 +29,7 @@ private:
 	bool eastLocked;
 
 	int charge_it;
-	ModulePlayer* player;
-	bool debug;
+	const ModulePlayer* player;
 
 	bool leftEnemy;
 
@@ -43,7 +41,7 @@ private:
 	bool inRange(int y) const;
 public:
 
-	Enemy(int y, int h, bool left = false);
+	Enemy(int h, bool left = false);
 	~Enemy();
 
 	bool CleanUp();
