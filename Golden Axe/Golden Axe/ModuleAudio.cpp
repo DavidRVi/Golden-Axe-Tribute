@@ -69,7 +69,7 @@ bool ModuleAudio::CleanUp()
 }
 
 // Play a music file
-bool ModuleAudio::PlayMusic(const char* path, float fade_time)
+bool ModuleAudio::PlayMusic(const char* path, float fade_time, int loop)
 {
 	bool ret = true;
 
@@ -107,7 +107,7 @@ bool ModuleAudio::PlayMusic(const char* path, float fade_time)
 		}
 		else
 		{
-			if (Mix_PlayMusic(music, -1) < 0)
+			if (Mix_PlayMusic(music, loop) < 0)
 			{
 				LOG("Cannot play in music %s. Mix_GetError(): %s", path, Mix_GetError());
 				ret = false;
@@ -150,4 +150,11 @@ bool ModuleAudio::PlayFx(unsigned int id, int repeat)
 	}
 
 	return ret;
+}
+
+void ModuleAudio::FreeFx() {
+	for (vector<Mix_Chunk*>::iterator it = fx.begin(); it != fx.end(); ++it)
+		Mix_FreeChunk(*it);
+
+	fx.clear();
 }

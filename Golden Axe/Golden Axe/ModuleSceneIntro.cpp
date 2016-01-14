@@ -42,7 +42,7 @@ bool ModuleSceneIntro::Start()
 {
 	bool ret = true;
 	LOG("Loading Intro Scene");
-
+	App->renderer->ResetCamera();
 	graphics = App->textures->Load("Game/Sprites/intro.png");
 	background_tex = App->textures->Load("Game/Sprites/title_background.png");
 
@@ -87,7 +87,11 @@ update_status ModuleSceneIntro::Update()
 
 	
 	if (App->input->GetKey(SDL_SCANCODE_RETURN) == KEY_DOWN)
-		App->fade->FadeToBlack((Module*) App->level1, this);
+	{
+		App->audio->FreeFx();
+		App->fade->FadeToBlack((Module*)App->level1, this);
+	}
+
 
 	return UPDATE_CONTINUE;
 }

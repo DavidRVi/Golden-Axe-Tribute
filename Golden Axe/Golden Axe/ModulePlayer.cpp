@@ -5,10 +5,10 @@
 #include "ModuleAudio.h"
 #include "ModuleRender.h"
 #include "ModuleCollisions.h"
+#include "ModuleSceneLevel1.h"
 
 ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	player_height = 50;
-	forward_walking = true;
 	repaint_frame = false;
 
 	jumping_up = false;
@@ -29,9 +29,9 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	fallingTimer = new Timer(400);
 	hasHit = false;
 	//Time to wait to change to idle frame when idle
-	idle_timer = new Timer(750);
+	idleTimer = new Timer(750);
 
-	run_timer = new Timer(300);
+	runTimer = new Timer(300);
 	isRunning = false;
 
 	pivot.x = 60;
@@ -39,12 +39,7 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 	pivot.h = 10;
 	pivot.w = 30;
 
-	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
-	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
-	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PFINAL);
-	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
-	finalComboCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PFINAL);
-	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 30, player_height + 20, this, PATTACK);
+	
 
 	// Idle frame has to be painted at pivor.x - 15 to fit in
 	idle.x = 135;
@@ -129,25 +124,24 @@ ModulePlayer::ModulePlayer(bool enabled) : Module(enabled) {
 
 	recovery.frames.push_back({ 220, 570, 50, 50 });
 	recovery.frames.push_back({ 270, 570, 50, 50 });
-	recovery.speed = 0.09f;
+	recovery.speed = 0.08f;
 
-	barHits = 3;
-	lifeBars = 3;
-	lives = 3;
-	magicFlasks = 1;
+	dying.frames.push_back({ 120, 560, 80, 60 });
+	dying.frames.push_back({ 0, 0, 0, 0 });
+	dying.speed = 0.09f;
 
 	debug = false;
 	if (debug)
 	{
-		RELEASE(attackAnimation);
-		attackAnimation = new Timer(5000);
-		combo3.speed = 0.01f;
+		RELEASE(fallingTimer);
+		fallingTimer = new Timer(5000);
+		recovery.speed = 0.01f;
 	}
 }
 
 ModulePlayer::~ModulePlayer() { 
-	RELEASE(idle_timer);
-	RELEASE(run_timer);
+	RELEASE(idleTimer);
+	RELEASE(runTimer);
 	RELEASE(attackWindow);
 	RELEASE(jumpAttackWindow);
 	RELEASE(attackAnimation);
@@ -157,13 +151,30 @@ ModulePlayer::~ModulePlayer() {
 
 bool ModulePlayer::Start() {
 	bool ret = true;
+
+	pivot.x = 60;
+	pivot.y = 200;
 	current_state = IDLE;
+	barHits = 2;
+	lifeBars = 3;
+	lives = 3;
+	magicFlasks = 1;
+	forward_walking = true;
 
 	graphics = App->textures->Load("Game/Sprites/dwarf.png");	// Sprite sheet
 	attack_fx = App->audio->LoadFx("Game/fx/attack.wav");		// Attack audio effect
 	hit1_fx = App->audio->LoadFx("Game/fx/hit1.wav");
 	hit2_fx = App->audio->LoadFx("Game/fx/hit2.wav");
 	charge_fx = App->audio->LoadFx("Game/fx/charge.wav");
+	dying_fx = App->audio->LoadFx("Game/fx/dying.wav");
+	fall_fx = App->audio->LoadFx("Game/fx/enemy_fall.wav");
+
+	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, PLAYER);
+	hitBoxCol = new Collider(pivot.x, pivot.y - player_height, pivot.w, player_height, this, PHITBOX);
+	chargeAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 10, 30, this, PFINAL);
+	idleAttackCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PATTACK);
+	finalComboCol = new Collider(pivot.x + pivot.w, pivot.y - 40, 40, 40, this, PFINAL);
+	jumpAttackCol = new Collider(pivot.x + pivot.w, pivot.y - player_height, 30, player_height + 20, this, PATTACK);
 
 	App->collisions->AddCollider(pivotCol);
 	App->collisions->AddCollider(hitBoxCol);
@@ -171,6 +182,7 @@ bool ModulePlayer::Start() {
 	App->collisions->AddCollider(idleAttackCol);
 	App->collisions->AddCollider(jumpAttackCol);
 	App->collisions->AddCollider(finalComboCol);
+
 	chargeAttackCol->setActive(false);
 	idleAttackCol->setActive(false);
 	jumpAttackCol->setActive(false);
@@ -188,22 +200,35 @@ update_status ModulePlayer::PreUpdate() {
 		eastLocked = false;
 		westLocked = false;
 	}
-	
 	if (current_state == FALLING_DOWN)
 	{
 		if (fallingTimer->hasPassed())
 		{
 			current_state = LAY_DOWN;
 			fallingTimer->resetTimer();
+			App->audio->PlayFx(fall_fx, 0);
 		}
 		return UPDATE_CONTINUE;
 	}
 	else if (current_state == LAY_DOWN)
 	{
+		
 		if (fallingTimer->hasPassed())
 		{
-			current_state = RECOVERY;
-			fallingTimer->resetTimer();
+			if (lifeBars <= 0)
+			{
+				App->audio->PlayFx(dying_fx, 0);
+				lives--;
+				//current_state = DYING;
+				if (lives > 0)
+					lifeBars = 3;
+				current_state = DYING;
+				idleTimer->resetTimer();
+			}
+			else {
+				current_state = RECOVERY;
+				fallingTimer->resetTimer();
+			}
 		}
 		return UPDATE_CONTINUE;
 	}
@@ -213,6 +238,19 @@ update_status ModulePlayer::PreUpdate() {
 		{
 			hitBoxCol->setActive(true);
 			current_state = IDLE;
+		}
+		return UPDATE_CONTINUE;
+	}
+	else if (current_state == DYING)
+	{
+		if (idleTimer->hasPassed())
+		{
+			if (lives <= 0)
+				App->level1->TriggerGameOver();
+			else {
+				hitBoxCol->setActive(true);
+				current_state = IDLE;
+			}
 		}
 		return UPDATE_CONTINUE;
 	}
@@ -312,7 +350,7 @@ update_status ModulePlayer::PreUpdate() {
 			{
 				if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_DOWN)
 				{
-					if (!run_timer->hasPassed())	//Inside the run timer window
+					if (!runTimer->hasPassed())	//Inside the run timer window
 					{
 						current_state = RUN_FORWARD;
 						last_frame = forward.frames[0];
@@ -320,7 +358,7 @@ update_status ModulePlayer::PreUpdate() {
 						isRunning = true;
 					}
 					else {
-						run_timer->resetTimer();
+						runTimer->resetTimer();
 						current_state = FORWARD;
 						forward_walking = true;
 						isRunning = false;
@@ -351,13 +389,13 @@ update_status ModulePlayer::PreUpdate() {
 					}
 				}
 
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 			}
 			else if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
 			{
 				if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_DOWN)
 				{
-					if (!run_timer->hasPassed())
+					if (!runTimer->hasPassed())
 					{
 						current_state = RUN_BACKWARD;
 						last_frame = forward.frames[0];
@@ -365,7 +403,7 @@ update_status ModulePlayer::PreUpdate() {
 						isRunning = true;
 					}
 					else{
-						run_timer->resetTimer();
+						runTimer->resetTimer();
 						current_state = BACKWARD;
 						forward_walking = false;
 						isRunning = false;
@@ -395,19 +433,19 @@ update_status ModulePlayer::PreUpdate() {
 					}
 				}
 
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 			}
 			else if (App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_DOWN)
 			{
 				isRunning = false;
 				current_state = DOWN;
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 			}
 			else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_UP) == KEY_DOWN)
 			{
 				isRunning = false;
 				current_state = UP;
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 			}
 			if (App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
 			{
@@ -422,7 +460,7 @@ update_status ModulePlayer::PreUpdate() {
 			{
 				if (attackWindow->hasPassed() && attackState != CHARGEATTACK)
 				{
-					idle_timer->resetTimer();
+					idleTimer->resetTimer();
 					attackAnimation->resetTimer();
 					idleattack.resetAnimation();
 					current_state = ATTACKING;
@@ -437,7 +475,7 @@ update_status ModulePlayer::PreUpdate() {
 		{
 			if (App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
 			{
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 				current_state = ATTACKING;
 				attackWindow->resetTimer();
 				attackAnimation->resetTimer();
@@ -458,7 +496,7 @@ update_status ModulePlayer::PreUpdate() {
 			}
 			else if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_DOWN) == KEY_REPEAT)
 			{
-				idle_timer->resetTimer();
+				idleTimer->resetTimer();
 				current_state = IDLE;
 				attackState = NONE;
 				hasHit = false;
@@ -495,7 +533,7 @@ update_status ModulePlayer::PreUpdate() {
 			jumping_up = false;
 	}
 	
-	if (idle_timer->hasPassed())
+	if (idleTimer->hasPassed())
 		repaint_frame = false;
 	else repaint_frame = true;
 
@@ -580,12 +618,13 @@ update_status ModulePlayer::Update() {
 				current_state = BACKWARD;
 				isRunning = false;
 			}
-
 		}
 		break;
 	}
 
-	hitBoxCol->SetPosition(pivot.x, pivot.y - player_height - getJumpHeight(jump_it) + 5);
+	if (current_state == JUMPING)
+		hitBoxCol->SetPosition(pivot.x, pivot.y - player_height - getJumpHeight(jump_it) + 5);
+	else hitBoxCol->SetPosition(pivot.x, pivot.y - player_height);
 	pivotCol->SetPosition(pivot.x, pivot.y);
 	if (forward_walking)
 	{
@@ -662,18 +701,17 @@ bool ModulePlayer::OnCollision(Collider* a, Collider* b){
 	{
 		if (inRange(b->GetListener()->GetScreenHeight()))
 		{
+			App->audio->PlayFx(charge_fx, 0);
+			if (b->GetListener()->GetScreenWidth() > pivot.x)
+				forward_walking = true;
+			else forward_walking = false;
 			charge_it = 0;
 			hitBoxCol->setActive(false);
 			barHits--;
 			if (barHits <= 0)
 			{
 				lifeBars--;
-				if (lifeBars <= 0)
-				{
-					lives--;
-					if (lives > 0)
-						lifeBars = 3;
-				}
+				barHits = 2;
 			}
 			fallingTimer->resetTimer();
 			current_state = FALLING_DOWN;
@@ -695,6 +733,12 @@ int ModulePlayer::getChargeHeight(int i) const{
 }
 
 bool ModulePlayer::Draw() {
+	if (debug)
+	{
+		forward_walking = true;
+		current_state = DYING;
+	}
+
 	bool ret = true;
 	//Draw Animations
 	switch (current_state)
@@ -813,8 +857,7 @@ bool ModulePlayer::Draw() {
 		}
 		break;
 	case(ATTACKING) :
-		if (debug)
-			attackState = COMBO_3;
+		
 		SDL_Rect frame;
 		switch (attackState) {
 		case(IDLEATTACK):
@@ -908,14 +951,43 @@ bool ModulePlayer::Draw() {
 	case(FALLING_DOWN):
 		if (forward_walking)
 		{
-			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
+			ret = App->renderer->Blit(graphics, pivot.x - 10, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
 		}
 		else {
-			ret = App->renderer->Blit(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
+			ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height - getChargeHeight(charge_it), &falling_down);
 		}
 		charge_it++;
 		break;
 
+	case(LAY_DOWN):
+		if (forward_walking)
+		{
+			ret = App->renderer->Blit(graphics, pivot.x - 10, pivot.y - player_height, &lay_down);
+		}
+		else {
+			ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &lay_down);
+		}
+		break;
+
+	case(RECOVERY):
+		if (forward_walking)
+		{
+			ret = App->renderer->Blit(graphics, pivot.x-10, pivot.y - player_height +5, &recovery.GetCurrentFrame());
+		}
+		else {
+			ret = App->renderer->BlitFlipH(graphics, pivot.x - 10, pivot.y - player_height + 5, &recovery.GetCurrentFrame());
+		}
+		break;
+
+	case(DYING):
+		if (forward_walking)
+		{
+			ret = App->renderer->Blit(graphics, pivot.x - 7, pivot.y - player_height, &dying.GetCurrentFrame());
+		}
+		else {
+			ret = App->renderer->BlitFlipH(graphics, pivot.x, pivot.y - player_height, &dying.GetCurrentFrame());
+		}
+		break;
 	}
 
 	return ret;

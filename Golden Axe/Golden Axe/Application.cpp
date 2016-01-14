@@ -32,7 +32,7 @@ Application::Application()
 	modules.push_back(camController = new ModuleCameraController(false));
 	modules.push_back(fade = new ModuleFadeToBlack());
 
-	modules.push_back(collisions = new ModuleCollisions());
+	modules.push_back(collisions = new ModuleCollisions(false));
 }
 
 Application::~Application()

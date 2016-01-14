@@ -52,6 +52,7 @@ public:
 
 	void SetPosition(int x, int y);
 	int GetScreenHeight() const;
+	int GetScreenWidth() const;
 
 	Animation idle;
 	Animation forward;

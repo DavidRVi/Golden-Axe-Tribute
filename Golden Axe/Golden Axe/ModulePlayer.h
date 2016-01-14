@@ -59,6 +59,7 @@ public:
 	SDL_Rect falling_down;
 	SDL_Rect lay_down;
 	Animation recovery;
+	Animation dying;
 
 
 	SDL_Rect pivot;
@@ -66,16 +67,18 @@ public:
 	unsigned int hit1_fx;
 	unsigned int hit2_fx;
 	unsigned int charge_fx;
+	unsigned int dying_fx;
+	unsigned int fall_fx;
 
 private:
 	state current_state;
 	bool forward_walking;
 	bool repaint_frame;
 	SDL_Rect last_frame;
-	Timer* idle_timer;
+	Timer* idleTimer;
 
 
-	Timer* run_timer;		//Time the player is available to push the Left/Right arrow key again in order to run
+	Timer* runTimer;		//Time the player is available to push the Left/Right arrow key again in order to run
 	bool isRunning;
 	
 	bool northLocked;

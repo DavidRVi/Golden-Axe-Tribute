@@ -19,7 +19,7 @@ Enemy::Enemy(int y, int h) {
 	hitTimer = new Timer(700);
 	attackTimer = new Timer(450);
 	chargeTimer = new Timer(300);
-	idleTimer = new Timer(1000);
+	idleTimer = new Timer(1400);
 
 	pivot.x = App->camController->eastWall->GetRect()->x;
 	pivot.y = h;
@@ -60,6 +60,12 @@ Enemy::Enemy(int y, int h) {
 	idleAttack.frames.push_back({ 170, 100, 70, 110 });
 	idleAttack.frames.push_back({ 240, 100, 100, 110 });
 	idleAttack.speed = 0.1f;
+
+	forward.frames.push_back({ 150, 10, 60, 90 });
+	forward.frames.push_back({ 210, 10, 60, 90 });
+	forward.frames.push_back({ 280, 10, 60, 90 });
+	forward.frames.push_back({ 340, 10, 60, 90 });
+	forward.speed = 0.09f;
 
 	pivotCol = new Collider(pivot.x, pivot.y, pivot.w, pivot.h, this, ENEMY);
 	hitBoxCol = new Collider(pivot.x, pivot.y - enemyHeight, pivot.w, enemyHeight, this, EHITBOX);
@@ -111,7 +117,7 @@ update_status Enemy::PreUpdate() {
 		attackCol->SetDirty(true);
 	}
 	*/
-	//attackCol->setActive(false);
+	attackCol->setActive(false);
 	update_status ret = UPDATE_CONTINUE;
 	switch (current_state) {
 	case(EFALLING_DOWN) :
@@ -181,7 +187,7 @@ update_status Enemy::PreUpdate() {
 			{
 				if (!forward_walking)
 				{
-					if (player->pivot.x >= (pivot.x - 2 * attackCol->GetRect()->w) && (player->pivot.x <= pivot.x))
+					if (player->pivot.x >= (pivot.x -  attackCol->GetRect()->w - 10) && (player->pivot.x <= pivot.x))
 					{
 						attackTimer->resetTimer();
 						idleAttack.resetAnimation();
@@ -193,10 +199,11 @@ update_status Enemy::PreUpdate() {
 						charge_it = 7;
 						chargeTimer->resetTimer();
 						current_state = ECHARGING;
+						chargeAttackCol->setActive(true);
 					}
 				}
 				else {
-					if (player->pivot.x <= (pivot.x + 2 * attackCol->GetRect()->w) && (player->pivot.x >= pivot.x))
+					if (player->pivot.x <= (pivot.x + attackCol->GetRect()->w + 10) && (player->pivot.x >= pivot.x))
 					{
 						attackTimer->resetTimer();
 						idleAttack.resetAnimation();
@@ -207,6 +214,7 @@ update_status Enemy::PreUpdate() {
 					{
 						charge_it = 7;
 						chargeTimer->resetTimer();
+						chargeAttackCol->setActive(true);
 						current_state = ECHARGING;
 					}
 				}
@@ -240,7 +248,9 @@ update_status Enemy::PreUpdate() {
 			eastLocked = false;
 			westLocked = false;
 		}
-		else chargeAttackCol->setActive(true);
+		//else chargeAttackCol->setActive(true);
+		break;
+
 	}
 	return ret;
 }
@@ -258,11 +268,11 @@ update_status Enemy::Update() {
 		if (forward_walking)
 		{
 			if (!eastLocked)
-				pivot.x += 7;
+				pivot.x += 9;
 		}
 		else {
 			if (!westLocked)
-				pivot.x -= 7;
+				pivot.x -= 9;
 		}
 	}
 
@@ -424,4 +434,8 @@ int Enemy::GetFallHeight(int i) const {
 
 bool Enemy::inRange(int y) const {
 	return ((y - 5) <= pivot.y) && ((y + 5) >= pivot.y);
+}
+
+int Enemy::GetScreenWidth() const {
+	return pivot.x;
 }

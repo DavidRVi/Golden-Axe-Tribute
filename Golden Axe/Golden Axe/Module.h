@@ -71,6 +71,7 @@ public:
 
 	virtual bool Draw() { return true; }
 	virtual int GetScreenHeight() const { return 0;  }
+	virtual int GetScreenWidth() const { return 0;  }
 
 private:
 	bool active = true;

@@ -2,12 +2,12 @@
 #include "ModuleRender.h"
 #include "Application.h"
 #include "ModuleCollisions.h"
-#include "ModuleInput.h"
 #include "Point.h"
 #include "ModuleSceneLevel1.h"
 #include "ModuleTextures.h"
 #include "ModulePlayer.h"
 #include "ModuleAudio.h"
+#include "ModuleFadeToBlack.h"
 
 ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 {
@@ -55,7 +55,14 @@ ModuleCameraController::ModuleCameraController(bool enabled) : Module(enabled)
 	magicFlask.w = 5;
 	magicFlask.h = 10;
 
+	gameOver.x = 0;
+	gameOver.y = 165;
+	gameOver.w = 140;
+	gameOver.h = 35;
+
 	encounterCount = 0;
+
+	go_timer = new Timer(1000);
 }
 
 ModuleCameraController::~ModuleCameraController() {
@@ -126,7 +133,7 @@ update_status ModuleCameraController::Update() {
 				App->collisions->AddCollider(cameraTrigger);
 				triggerCount = 0;
 				show_go = false;
-				RELEASE(go_timer);
+				//go_timer->resetTimer();
 			}
 			else {
 				//LEVEL COMPLETE
@@ -136,35 +143,42 @@ update_status ModuleCameraController::Update() {
 	}
 
 	//--------------- INTERFACE ------------------
-	int magicFlasks = App->player->GetMagicFlasks();
-	if (magicFlasks > 0)
+	if (App->level1->getLevelState() != GAME_OVER)
 	{
-		App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
-		//Draw magicFlasks depending on number
-		for (int i = 0; i < magicFlasks; i++)
-			App->renderer->Blit(interface, westWall->GetRect()->x + 88 + (i*(magicFlask.w + 3)), 19, &magicFlask);
+		int magicFlasks = App->player->GetMagicFlasks();
+		if (magicFlasks > 0)
+		{
+			App->renderer->Blit(interface, westWall->GetRect()->x + 80, 5, &magic);
+			//Draw magicFlasks depending on number
+			for (int i = 0; i < magicFlasks; i++)
+				App->renderer->Blit(interface, westWall->GetRect()->x + 88 + (i*(magicFlask.w + 3)), 19, &magicFlask);
+		}
+
+		App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 30, 215, &charPortrait);
+
+		switch (App->player->GetLives())
+		{
+		case(3) :
+			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_3);
+			break;
+		case(2) :
+			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_2);
+			break;
+		case(1) :
+			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_1);
+			break;
+		}
+
+		int lifeBars = App->player->GetLifeBars();
+
+		for (int i = 0; i < lifeBars; i++)
+			App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 60 - (i*lifeBar.w), 215, &lifeBar);
 	}
-
-	App->renderer->Blit(interface, westWall->GetRect()->x, 20, &stage);
-	App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH/2) - 30, 215, &charPortrait);
-
-	switch (App->player->GetLives())
-	{
-	case(3) :
-		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_3);
-		break;
-	case(2):
-		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_2);
-		break;
-	case(1):
-		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 37, 215, &life_1);
-		break;
+	else {
+		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - gameOver.w / 2, SCREEN_HEIGHT / 2 - gameOver.h / 2, &gameOver);
 	}
-
-	int lifeBars = App->player->GetLifeBars();
-
-	for (int i = 0; i < lifeBars; i++)
-		App->renderer->Blit(interface, westWall->GetRect()->x + (SCREEN_WIDTH / 2) - 60 - (i*lifeBar.w), 215, &lifeBar);
+	
 
 	//-----------------------------------------
 
@@ -177,6 +191,7 @@ update_status ModuleCameraController::PostUpdate() {
 }
 
 bool ModuleCameraController::CleanUp() {
+	//App->renderer->ResetCamera();
 	App->textures->Unload(interface);
 	return true;
 }
@@ -225,6 +240,6 @@ void ModuleCameraController::ShowGoAnimation() {
 	{
 		App->audio->PlayFx(go_fx, 2);
 		show_go = true;
-		go_timer = new Timer(1000);
+		go_timer->resetTimer();
 	}
 }

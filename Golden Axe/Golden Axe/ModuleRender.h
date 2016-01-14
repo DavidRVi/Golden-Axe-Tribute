@@ -24,6 +24,8 @@ public:
 	bool BlitFlipH(SDL_Texture* texture, int x, int y, SDL_Rect* section, float speed = 1.0f);
 	void DrawRectangle(SDL_Rect* rect, float speed = 1.0f);
 
+	void ResetCamera();
+
 public:
 	SDL_Renderer* renderer = nullptr;
 	SDL_Rect camera;

@@ -155,3 +155,9 @@ void ModuleRender::DrawRectangle(SDL_Rect* rect, float speed) {
 
 	SDL_RenderFillRect(App->renderer->renderer, &dstrect);
 }
+
+void ModuleRender::ResetCamera() {
+	camera.x = camera.y = 0;
+	camera.w = SCREEN_WIDTH * SCREEN_SIZE;
+	camera.h = SCREEN_HEIGHT* SCREEN_SIZE;
+}

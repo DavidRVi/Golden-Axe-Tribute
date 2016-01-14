@@ -7,7 +7,7 @@
 class Collider;
 class ModulePlayer;
 
-enum LevelState { BATTLE, NO_BATTLE };
+enum LevelState { BATTLE, NO_BATTLE, GAME_OVER, WIN };
 class ModuleSceneLevel1 : public Module {
 public:
 	ModuleSceneLevel1(bool enabled = false);
@@ -20,6 +20,9 @@ public:
 	void ChangeState(LevelState state);
 	void spawnEnemies(int y, int h);			//Always spawn 2 enemies right of the screen
 	bool DeleteEnemy(const Module* enemy);	
+	void TriggerGameOver();
+
+	LevelState getLevelState() const;
 
 
 public:
@@ -30,12 +33,13 @@ public:
 
 private:
 
+	bool playMusic;
+
 	Collider* background_wall1;
 	Collider* background_wall2;
 	Collider* rightLimiter;
 	Collider* leftLimiter;
 	Collider* background_wall3;
-
 	LevelState current_state;
 
 	std::vector<Module*> gameElements;

@@ -47,6 +47,7 @@ private:
 	SDL_Rect life_1;
 	SDL_Rect lifeBar;
 	SDL_Rect magicFlask;
+	SDL_Rect gameOver;
 
 	int encounterCount;
 
