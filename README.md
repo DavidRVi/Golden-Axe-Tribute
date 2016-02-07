@@ -2,6 +2,7 @@
 Repository for a small tribute to the clasic retro Golden Axe arcade game.
 
 ---------------------- HOW TO PLAY --------------------------
+-------------------------------------------------------------
 Press RETURN key in the title screen to begin playing.
 
 CONTROLS: 
