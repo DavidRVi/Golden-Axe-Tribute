@@ -1,0 +1,6 @@
+{
+  "name": "Golden Axe Tribute",
+  "tagline": "Repository for a small tribute to the clasic retro Golden Axe arcade game using SDL and C++",
+  "body": "### The Project\r\nThis is a tribute to the classic Golden Axe SEGA game, it's been made using C++ and SDL library.\r\n\r\n### Features\r\n\r\nIt features the dwarf controllable character in the original game, you can use the basic combo, charge, charge attack, jump, jump attack, high jump and one magic.\r\nThere's one type of enemy and one level, please enjoy!\r\n\r\n### HOW TO PLAY\r\nPress RETURN key in the title screen to begin playing.\r\n\r\nCONTROLS:\r\n\r\nUse arrows to move around the level. Press 'A' to use the magic power. Press 'S' to attack. Press 'D' to jump.\r\n\r\nIf you press the left or right arrow twice quickly you will begin to run. While running: Press 'S' to charge. Press 'D' to high jump.\r\n\r\nWhile jumping: Press 'S' to jump attack.\r\n\r\nThe game will finish when your character dies or you defeat all enemies. Press RETURN key again to go to the title screen once the game is finished.\r\n\r\n### Video of the game\r\n\r\nComing soon.\r\n\r\n### Authors and Contributors\r\n@DavidRVi\r\n\r\n### Support or Contact\r\nIf you have any inquiries please contact me: davizjo[AT]gmail[DOT]com",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
