@@ -26,6 +26,7 @@ Press RETURN key again to go to the title screen once the game is finished.
 --------------------------------------------------------------
 
 Github repo: https://github.com/DavidRVi/Golden-Axe-Tribute
+Github page: http://davidrvi.github.io/Golden-Axe-Tribute/
 
 --------------------------------------------------------------
 
