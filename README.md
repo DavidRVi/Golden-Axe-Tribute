@@ -34,6 +34,9 @@ Author: David Ruiz Vallejo
 
 --------------------------------------------------------------
 
-Youtube link of the game: https://www.youtube.com/watch?v=kNrGiwvx_oM
+Youtube link of the result: https://www.youtube.com/watch?v=iUrLxhRKRcc
+--------------------------------------------------------------
+
+Youtube link of the original game: https://www.youtube.com/watch?v=kNrGiwvx_oM
 
 ---------------------------------------------------------------
